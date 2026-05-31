@@ -68,3 +68,12 @@ export async function testConnection(payload: {
   );
   return data;
 }
+
+export async function getWebhook(): Promise<{ url: string | null }> {
+  const { data } = await api.get<{ url: string | null }>("/api/settings/webhook");
+  return data;
+}
+
+export async function setWebhook(url: string | null): Promise<void> {
+  await api.put("/api/settings/webhook", { url });
+}

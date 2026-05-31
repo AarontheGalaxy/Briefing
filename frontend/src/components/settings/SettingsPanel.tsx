@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { X, Eye, EyeOff } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { fetchModels, testConnection } from "@/lib/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchModels, testConnection, getWebhook, setWebhook } from "@/lib/api";
 import { useSettingsStore } from "@/store/settingsStore";
 import { cn } from "@/lib/utils";
 import type { Provider } from "@/types";
@@ -23,12 +23,30 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ open, onClose }) =
     useSettingsStore();
   const [showKey, setShowKey] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [webhookInput, setWebhookInput] = useState("");
+  const queryClient = useQueryClient();
 
   const { data: models = [] } = useQuery({
     queryKey: ["models", provider],
     queryFn: () => fetchModels(provider),
     enabled: open,
     staleTime: 30_000,
+  });
+
+  const { data: webhookData } = useQuery({
+    queryKey: ["webhook"],
+    queryFn: getWebhook,
+    enabled: open,
+    onSuccess: (d: { url: string | null }) => setWebhookInput(d.url ?? ""),
+  });
+
+  const webhookMutation = useMutation({
+    mutationFn: (url: string | null) => setWebhook(url),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["webhook"] });
+      toast.success("Webhook saved.");
+    },
+    onError: () => toast.error("Failed to save webhook."),
   });
 
   const handleProviderChange = (p: Provider) => {
@@ -163,6 +181,30 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ open, onClose }) =
               />
             </div>
           )}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              Webhook URL
+            </label>
+            <input
+              type="url"
+              value={webhookInput}
+              onChange={(e) => setWebhookInput(e.target.value)}
+              placeholder="https://your-server.com/webhook"
+              className="w-full bg-zinc-950 border border-zinc-800 text-zinc-300 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-zinc-700 font-mono"
+            />
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-zinc-600">
+                POST'd after every analysis completes.
+              </p>
+              <button
+                onClick={() => webhookMutation.mutate(webhookInput.trim() || null)}
+                disabled={webhookMutation.isPending}
+                className="text-xs text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
+              >
+                Save
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="border-t border-zinc-800 p-4">

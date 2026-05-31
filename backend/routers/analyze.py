@@ -15,6 +15,7 @@ from database import db_connection
 from models import AnalysisResponse, AnalyzeRequest, ActionItem
 from services.llm import call_llm
 from services.parser import build_prompt, parse_llm_response
+from services.webhook import fire_webhook
 from config import settings
 
 router = APIRouter(prefix="/api", tags=["analyze"])
@@ -121,7 +122,7 @@ async def analyze(http_request: Request, request: AnalyzeRequest) -> AnalysisRes
         )
         await db.commit()
 
-    return AnalysisResponse(
+    response = AnalysisResponse(
         id=analysis_id,
         summary=parsed.get("summary", ""),
         key_decisions=parsed.get("key_decisions", []),
@@ -136,3 +137,8 @@ async def analyze(http_request: Request, request: AnalyzeRequest) -> AnalysisRes
         provider=request.provider,
         model=request.model,
     )
+
+    # Fire webhook asynchronously — failure is silent and never blocks the response
+    await fire_webhook(response.model_dump())
+
+    return response

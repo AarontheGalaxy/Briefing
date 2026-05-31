@@ -102,4 +102,12 @@ async def init_db() -> None:
         # Populate FTS for any pre-existing rows (safe to run multiple times)
         await db.execute("INSERT OR IGNORE INTO analyses_fts(analyses_fts) VALUES('rebuild')")
 
+        # Generic key-value store for app settings (e.g. webhook_url)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+        """)
+
         await db.commit()

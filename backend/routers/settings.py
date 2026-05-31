@@ -1,15 +1,51 @@
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, HttpUrl
 import httpx
 
 from config import settings
+from database import db_connection
 
 logger = logging.getLogger(__name__)
 from models import ModelsResponse, TestConnectionRequest, TestConnectionResponse
 from services.llm import fetch_ollama_models, test_connection
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
+
+WEBHOOK_KEY = "webhook_url"
+
+
+class WebhookConfig(BaseModel):
+    url: Optional[str] = None
+
+
+@router.get("/webhook", response_model=WebhookConfig)
+async def get_webhook() -> WebhookConfig:
+    async with db_connection() as db:
+        async with db.execute(
+            "SELECT value FROM app_settings WHERE key = ?", (WEBHOOK_KEY,)
+        ) as cursor:
+            row = await cursor.fetchone()
+    return WebhookConfig(url=row[0] if row else None)
+
+
+@router.put("/webhook", response_model=WebhookConfig)
+async def set_webhook(body: WebhookConfig) -> WebhookConfig:
+    async with db_connection() as db:
+        if body.url:
+            await db.execute(
+                "INSERT INTO app_settings (key, value) VALUES (?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                (WEBHOOK_KEY, str(body.url)),
+            )
+        else:
+            await db.execute(
+                "DELETE FROM app_settings WHERE key = ?", (WEBHOOK_KEY,)
+            )
+        await db.commit()
+    return WebhookConfig(url=body.url)
 
 OPENAI_MODELS = ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"]
 ANTHROPIC_MODELS = [
