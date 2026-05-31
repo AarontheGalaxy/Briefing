@@ -51,7 +51,10 @@ const App: React.FC = () => {
         <UploadZone onAnalysisComplete={handleAnalysisComplete} />
       ) : (
         <ErrorBoundary key={displayedAnalysis.id}>
-          <AnalysisResult analysis={displayedAnalysis} />
+          <AnalysisResult
+            analysis={displayedAnalysis}
+            onSelectAnalysis={handleSelectAnalysis}
+          />
         </ErrorBoundary>
       )}
     </MainLayout>

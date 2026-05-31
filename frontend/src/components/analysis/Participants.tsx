@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { useCopy } from "@/hooks/useCopy";
+import { ParticipantModal } from "./ParticipantModal";
 
 interface ParticipantsProps {
   participants: string[];
   topics: string[];
   nextMeeting: string | null;
   keyDecisions: string[];
+  onSelectAnalysis?: (id: string) => void;
 }
 
 export const Participants: React.FC<ParticipantsProps> = ({
@@ -14,8 +16,10 @@ export const Participants: React.FC<ParticipantsProps> = ({
   topics,
   nextMeeting,
   keyDecisions,
+  onSelectAnalysis,
 }) => {
   const { copied, copy } = useCopy();
+  const [selectedParticipant, setSelectedParticipant] = useState<string | null>(null);
 
   return (
     <div className="space-y-4">
@@ -51,12 +55,14 @@ export const Participants: React.FC<ParticipantsProps> = ({
             </span>
             <div className="flex flex-wrap gap-1.5">
               {participants.map((p) => (
-                <span
+                <button
                   key={p}
-                  className="bg-zinc-800 text-zinc-300 text-xs px-2 py-1 rounded border border-zinc-700"
+                  onClick={() => setSelectedParticipant(p)}
+                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs px-2 py-1 rounded border border-zinc-700 transition-colors"
+                  title={`View ${p}'s meetings`}
                 >
                   {p}
-                </span>
+                </button>
               ))}
             </div>
           </div>
@@ -88,6 +94,17 @@ export const Participants: React.FC<ParticipantsProps> = ({
           </span>
           <p className="mt-1 text-sm font-mono text-zinc-400">{nextMeeting}</p>
         </div>
+      )}
+
+      {selectedParticipant && (
+        <ParticipantModal
+          name={selectedParticipant}
+          onClose={() => setSelectedParticipant(null)}
+          onSelectAnalysis={(id) => {
+            onSelectAnalysis?.(id);
+            setSelectedParticipant(null);
+          }}
+        />
       )}
     </div>
   );

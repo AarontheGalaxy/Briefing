@@ -148,6 +148,31 @@ async def update_completed_items(
     return {"updated": True}
 
 
+@router.get("/participants/{name}/analyses", response_model=HistoryListResponse)
+async def get_participant_analyses(
+    name: str,
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+) -> HistoryListResponse:
+    pattern = f'%"{name}"%'
+    offset = (page - 1) * limit
+    async with db_connection() as db:
+        async with db.execute(
+            "SELECT COUNT(*) FROM analyses WHERE participants LIKE ?", (pattern,)
+        ) as cursor:
+            total_row = await cursor.fetchone()
+            total = total_row[0] if total_row else 0
+
+        async with db.execute(
+            "SELECT * FROM analyses WHERE participants LIKE ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
+            (pattern, limit, offset),
+        ) as cursor:
+            rows = await cursor.fetchall()
+
+    items = [_row_to_analysis(dict(row)) for row in rows]
+    return HistoryListResponse(items=items, total=total, page=page, limit=limit)
+
+
 @router.delete("/history/{analysis_id}")
 async def delete_analysis(analysis_id: UUID) -> dict:
     async with db_connection() as db:

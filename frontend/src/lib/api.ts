@@ -53,6 +53,13 @@ export async function updateTags(id: string, tags: string[]): Promise<void> {
   await api.patch(`/api/history/${id}/tags`, { tags });
 }
 
+export async function fetchParticipantAnalyses(name: string, page = 1, limit = 20): Promise<HistoryListResponse> {
+  const { data } = await api.get<HistoryListResponse>(`/api/participants/${encodeURIComponent(name)}/analyses`, {
+    params: { page, limit },
+  });
+  return data;
+}
+
 export async function fetchModels(provider: string): Promise<string[]> {
   const { data } = await api.get<{ models: string[] }>("/api/settings/models", {
     params: { provider },

@@ -9,9 +9,10 @@ import type { Analysis } from "@/types";
 
 interface AnalysisResultProps {
   analysis: Analysis;
+  onSelectAnalysis?: (id: string) => void;
 }
 
-export const AnalysisResult: React.FC<AnalysisResultProps> = ({ analysis }) => {
+export const AnalysisResult: React.FC<AnalysisResultProps> = ({ analysis, onSelectAnalysis }) => {
   const slug = (analysis.file_name ?? "analysis").replace(/\.[^.]+$/, "");
 
   const exportMarkdown = () => {
@@ -81,6 +82,7 @@ export const AnalysisResult: React.FC<AnalysisResultProps> = ({ analysis }) => {
             topics={analysis.topics_discussed}
             nextMeeting={analysis.next_meeting}
             keyDecisions={analysis.key_decisions}
+            onSelectAnalysis={onSelectAnalysis}
           />
         </div>
       </div>
