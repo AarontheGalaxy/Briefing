@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { UploadZone } from "@/components/upload/UploadZone";
 import { AnalysisResult } from "@/components/analysis/AnalysisResult";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAnalysis } from "@/lib/api";
 import type { Analysis } from "@/types";
@@ -49,7 +50,9 @@ const App: React.FC = () => {
       {viewMode === "upload" || !displayedAnalysis ? (
         <UploadZone onAnalysisComplete={handleAnalysisComplete} />
       ) : (
-        <AnalysisResult analysis={displayedAnalysis} />
+        <ErrorBoundary key={displayedAnalysis.id}>
+          <AnalysisResult analysis={displayedAnalysis} />
+        </ErrorBoundary>
       )}
     </MainLayout>
   );
