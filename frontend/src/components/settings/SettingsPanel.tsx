@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Eye, EyeOff } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchModels, testConnection, getWebhook, setWebhook } from "@/lib/api";
@@ -37,8 +37,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ open, onClose }) =
     queryKey: ["webhook"],
     queryFn: getWebhook,
     enabled: open,
-    onSuccess: (d: { url: string | null }) => setWebhookInput(d.url ?? ""),
   });
+
+  useEffect(() => {
+    if (webhookData) setWebhookInput(webhookData.url ?? "");
+  }, [webhookData]);
 
   const webhookMutation = useMutation({
     mutationFn: (url: string | null) => setWebhook(url),
