@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import time
@@ -24,7 +25,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 @router.post("/analyze", response_model=AnalysisResponse)
 @limiter.limit("10/minute")
-async def analyze(request: Request, body: AnalyzeRequest) -> AnalysisResponse:
+async def analyze(request: Request, body: AnalyzeRequest) -> AnalysisResponse:  # noqa: ARG001
     ollama_url = settings.ollama_base_url
 
     prompt = build_prompt(body.text, body.meeting_type)
@@ -138,7 +139,7 @@ async def analyze(request: Request, body: AnalyzeRequest) -> AnalysisResponse:
         model=body.model,
     )
 
-    # Fire webhook asynchronously — failure is silent and never blocks the response
-    await fire_webhook(response.model_dump())
+    # Fire webhook in the background — never blocks the response
+    asyncio.create_task(fire_webhook(response.model_dump()))
 
     return response
