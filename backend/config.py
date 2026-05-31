@@ -8,6 +8,15 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./meetings.db"
     max_file_size_mb: int = 50
 
+    @property
+    def db_path(self) -> str:
+        # Extract the file path from the sqlite URL (strip the driver prefix)
+        url = self.database_url
+        if url.startswith("sqlite"):
+            path = url.split("///", 1)[-1]
+            return path.lstrip("./") if path.startswith("./") else path
+        return "meetings.db"
+
     class Config:
         env_file = ".env"
 

@@ -2,7 +2,9 @@ import aiosqlite
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-DB_PATH = "meetings.db"
+from config import settings
+
+DB_PATH = settings.db_path
 
 
 async def get_db() -> aiosqlite.Connection:
