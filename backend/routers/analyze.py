@@ -23,10 +23,10 @@ limiter = Limiter(key_func=get_remote_address)
 
 @router.post("/analyze", response_model=AnalysisResponse)
 @limiter.limit("10/minute")
-async def analyze(http_request: Request, request: AnalyzeRequest) -> AnalysisResponse:
+async def analyze(http_request: Request, request: AnalyzeRequest) -> AnalysisResponse:  # noqa: ARG001
     ollama_url = settings.ollama_base_url
 
-    prompt = build_prompt(request.text)
+    prompt = build_prompt(request.text, request.meeting_type)
     start = time.monotonic()
 
     try:

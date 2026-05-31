@@ -20,6 +20,7 @@ class AnalyzeRequest(BaseModel):
     provider: str = "ollama"
     model: str = "llama3.1"
     api_key: Optional[str] = None
+    meeting_type: str = "general"
 
 
 class AnalysisResponse(BaseModel):

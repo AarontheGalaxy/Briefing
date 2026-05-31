@@ -29,11 +29,14 @@ export interface UploadResponse {
   file_name: string;
 }
 
+export type MeetingType = "general" | "sales" | "one_on_one" | "sprint_review" | "board";
+
 export interface AnalyzeRequest {
   text: string;
   provider: string;
   model: string;
   api_key: string | null;
+  meeting_type: MeetingType;
 }
 
 export interface HistoryListResponse {

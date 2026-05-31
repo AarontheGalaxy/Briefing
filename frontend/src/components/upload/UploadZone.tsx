@@ -6,7 +6,15 @@ import { useAnalysis } from "@/hooks/useAnalysis";
 import { useSettingsStore } from "@/store/settingsStore";
 import { ModelSelector } from "./ModelSelector";
 import { toast } from "sonner";
-import type { Analysis } from "@/types";
+import type { Analysis, MeetingType } from "@/types";
+
+const MEETING_TYPES: { value: MeetingType; label: string }[] = [
+  { value: "general", label: "General" },
+  { value: "sales", label: "Sales" },
+  { value: "one_on_one", label: "1:1" },
+  { value: "sprint_review", label: "Sprint Review" },
+  { value: "board", label: "Board Meeting" },
+];
 
 const SUPPORTED_EXTENSIONS = [".pdf", ".docx", ".txt", ".md"];
 const MAX_CHARS = 100_000;
@@ -23,6 +31,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onAnalysisComplete }) =>
   const [uploadedWordCount, setUploadedWordCount] = useState<number | null>(null);
   const [pastedText, setPastedText] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [meetingType, setMeetingType] = useState<MeetingType>("general");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { provider, model, apiKey } = useSettingsStore();
@@ -73,6 +82,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onAnalysisComplete }) =>
         provider,
         model,
         api_key: apiKey || null,
+        meeting_type: meetingType,
       });
       onAnalysisComplete(result);
     } catch (err: unknown) {
@@ -184,7 +194,18 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onAnalysisComplete }) =>
       )}
 
       <div className="mt-4 flex items-center justify-between gap-4">
-        <ModelSelector />
+        <div className="flex items-center gap-2">
+          <ModelSelector />
+          <select
+            value={meetingType}
+            onChange={(e) => setMeetingType(e.target.value as MeetingType)}
+            className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm rounded px-2 py-1.5 focus:outline-none focus:border-zinc-700 transition-colors"
+          >
+            {MEETING_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </select>
+        </div>
         <button
           disabled={!canAnalyze || isLoading}
           onClick={handleAnalyze}

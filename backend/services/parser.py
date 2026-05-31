@@ -4,10 +4,7 @@ from typing import Any
 
 MAX_TRANSCRIPT_CHARS = 80_000
 
-_SYSTEM_INSTRUCTIONS = """You are a meeting analysis assistant. Analyze the meeting transcript provided after the separator and respond ONLY with the JSON structure below. Do not add any other text, explanation, or markdown.
-
-JSON format:
-{
+_JSON_FORMAT = """{
   "summary": "3-5 sentence summary of the meeting",
   "key_decisions": ["decision 1", "decision 2"],
   "action_items": [
@@ -24,13 +21,40 @@ JSON format:
   "sentiment": "positive|neutral|negative"
 }"""
 
+_BASE_INSTRUCTIONS = (
+    "Analyze the meeting transcript provided after the separator and respond ONLY "
+    "with the JSON structure below. Do not add any other text, explanation, or markdown."
+)
+
+_FOCUS_HINTS: dict[str, str] = {
+    "general": "",
+    "sales": (
+        "Focus on: deal status, customer objections, pricing discussions, next steps with prospects, "
+        "and revenue-related decisions."
+    ),
+    "one_on_one": (
+        "Focus on: personal goals, blockers, career development topics, manager feedback, "
+        "and individual commitments."
+    ),
+    "sprint_review": (
+        "Focus on: completed stories, velocity, sprint goals achieved or missed, "
+        "retrospective items, and backlog priorities."
+    ),
+    "board": (
+        "Focus on: strategic decisions, financial metrics, governance items, "
+        "risk management, and executive-level action items."
+    ),
+}
+
 _SEPARATOR = "--- TRANSCRIPT START ---"
 
 
-def build_prompt(transcript: str) -> str:
-    # Truncate oversized transcripts before they reach the LLM
+def build_prompt(transcript: str, meeting_type: str = "general") -> str:
+    focus = _FOCUS_HINTS.get(meeting_type, "")
+    focus_block = f"\n\nMeeting type focus: {focus}" if focus else ""
+    instructions = f"You are a meeting analysis assistant. {_BASE_INSTRUCTIONS}{focus_block}\n\nJSON format:\n{_JSON_FORMAT}"
     safe_transcript = transcript[:MAX_TRANSCRIPT_CHARS]
-    return f"{_SYSTEM_INSTRUCTIONS}\n\n{_SEPARATOR}\n{safe_transcript}"
+    return f"{instructions}\n\n{_SEPARATOR}\n{safe_transcript}"
 
 
 def _extract_json_block(text: str) -> str | None:
