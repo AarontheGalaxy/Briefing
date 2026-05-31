@@ -20,6 +20,7 @@ export interface Analysis {
   file_name?: string | null;
   provider?: string | null;
   model?: string | null;
+  completed_items?: number[];
 }
 
 export interface UploadResponse {

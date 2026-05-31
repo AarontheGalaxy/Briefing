@@ -61,7 +61,11 @@ export const AnalysisResult: React.FC<AnalysisResultProps> = ({ analysis }) => {
         </div>
 
         <div className="p-4">
-          <ActionItems items={analysis.action_items} />
+          <ActionItems
+            items={analysis.action_items}
+            analysisId={analysis.id}
+            initialCompleted={analysis.completed_items ?? []}
+          />
         </div>
 
         <div className="p-4">

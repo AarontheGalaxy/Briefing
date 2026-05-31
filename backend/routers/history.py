@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
 from database import db_connection
-from models import AnalysisResponse, ActionItem, HistoryListResponse
+from models import AnalysisResponse, ActionItem, HistoryListResponse, UpdateCompletedItemsRequest
 
 router = APIRouter(prefix="/api", tags=["history"])
 
@@ -34,6 +34,7 @@ def _row_to_analysis(row: dict) -> AnalysisResponse:
         file_name=row["file_name"],
         provider=row["provider"],
         model=row["model"],
+        completed_items=json.loads(row["completed_items"] or "[]"),
     )
 
 
@@ -87,6 +88,25 @@ async def get_analysis(analysis_id: UUID) -> AnalysisResponse:
         raise HTTPException(status_code=404, detail="Analysis not found.")
 
     return _row_to_analysis(dict(row))
+
+
+@router.patch("/history/{analysis_id}/actions")
+async def update_completed_items(
+    analysis_id: UUID, body: UpdateCompletedItemsRequest
+) -> dict:
+    async with db_connection() as db:
+        async with db.execute(
+            "SELECT id FROM analyses WHERE id = ?", (str(analysis_id),)
+        ) as cursor:
+            if not await cursor.fetchone():
+                raise HTTPException(status_code=404, detail="Analysis not found.")
+
+        await db.execute(
+            "UPDATE analyses SET completed_items = ? WHERE id = ?",
+            (json.dumps(body.completed), str(analysis_id)),
+        )
+        await db.commit()
+    return {"updated": True}
 
 
 @router.delete("/history/{analysis_id}")

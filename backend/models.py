@@ -37,6 +37,11 @@ class AnalysisResponse(BaseModel):
     file_name: Optional[str] = None
     provider: Optional[str] = None
     model: Optional[str] = None
+    completed_items: list[int] = []
+
+
+class UpdateCompletedItemsRequest(BaseModel):
+    completed: list[int]
 
 
 class HistoryListResponse(BaseModel):

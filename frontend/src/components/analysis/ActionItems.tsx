@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Copy, Check } from "lucide-react";
 import { useCopy } from "@/hooks/useCopy";
+import { updateCompletedItems } from "@/lib/api";
 import type { ActionItem } from "@/types";
 
 interface ActionItemsProps {
   items: ActionItem[];
+  analysisId: string;
+  initialCompleted?: number[];
 }
 
 const PRIORITY_DOT: Record<string, string> = {
@@ -13,17 +16,22 @@ const PRIORITY_DOT: Record<string, string> = {
   low: "bg-zinc-600",
 };
 
-export const ActionItems: React.FC<ActionItemsProps> = ({ items }) => {
-  const [checked, setChecked] = useState<Set<number>>(new Set());
+export const ActionItems: React.FC<ActionItemsProps> = ({
+  items,
+  analysisId,
+  initialCompleted = [],
+}) => {
+  const [checked, setChecked] = useState<Set<number>>(new Set(initialCompleted));
   const { copied, copy } = useCopy();
 
-  const toggle = (i: number) => {
+  const toggle = useCallback((i: number) => {
     setChecked((prev) => {
       const next = new Set(prev);
       next.has(i) ? next.delete(i) : next.add(i);
+      updateCompletedItems(analysisId, Array.from(next)).catch(() => {});
       return next;
     });
-  };
+  }, [analysisId]);
 
   const copyText = items
     .map((item, i) => {

@@ -43,4 +43,11 @@ async def init_db() -> None:
                 created_at TEXT
             )
         """)
+        # Additive migration — safe to run on existing databases
+        try:
+            await db.execute(
+                "ALTER TABLE analyses ADD COLUMN completed_items TEXT DEFAULT '[]'"
+            )
+        except Exception:
+            pass  # column already exists
         await db.commit()

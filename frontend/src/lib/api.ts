@@ -45,6 +45,10 @@ export async function deleteAnalysis(id: string): Promise<void> {
   await api.delete(`/api/history/${id}`);
 }
 
+export async function updateCompletedItems(id: string, completed: number[]): Promise<void> {
+  await api.patch(`/api/history/${id}/actions`, { completed });
+}
+
 export async function fetchModels(provider: string): Promise<string[]> {
   const { data } = await api.get<{ models: string[] }>("/api/settings/models", {
     params: { provider },
