@@ -3,6 +3,7 @@ import { FileDown, Braces } from "lucide-react";
 import { Summary } from "./Summary";
 import { ActionItems } from "./ActionItems";
 import { Participants } from "./Participants";
+import { TagEditor } from "./TagEditor";
 import { analysisToMarkdown, downloadFile } from "@/lib/utils";
 import type { Analysis } from "@/types";
 
@@ -51,6 +52,12 @@ export const AnalysisResult: React.FC<AnalysisResultProps> = ({ analysis }) => {
       </div>
 
       <div className="border border-zinc-800 rounded-md divide-y divide-zinc-800">
+        <div className="p-4">
+          <TagEditor
+            analysisId={analysis.id}
+            initialTags={analysis.tags ?? []}
+          />
+        </div>
         <div className="p-4">
           <Summary
             summary={analysis.summary}

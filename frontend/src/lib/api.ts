@@ -29,9 +29,9 @@ export async function analyzeText(request: AnalyzeRequest): Promise<Analysis> {
   return data;
 }
 
-export async function fetchHistory(page = 1, limit = 20, search = ""): Promise<HistoryListResponse> {
+export async function fetchHistory(page = 1, limit = 20, search = "", tag = ""): Promise<HistoryListResponse> {
   const { data } = await api.get<HistoryListResponse>("/api/history", {
-    params: { page, limit, ...(search ? { search } : {}) },
+    params: { page, limit, ...(search ? { search } : {}), ...(tag ? { tag } : {}) },
   });
   return data;
 }
@@ -47,6 +47,10 @@ export async function deleteAnalysis(id: string): Promise<void> {
 
 export async function updateCompletedItems(id: string, completed: number[]): Promise<void> {
   await api.patch(`/api/history/${id}/actions`, { completed });
+}
+
+export async function updateTags(id: string, tags: string[]): Promise<void> {
+  await api.patch(`/api/history/${id}/tags`, { tags });
 }
 
 export async function fetchModels(provider: string): Promise<string[]> {

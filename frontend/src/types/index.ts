@@ -21,6 +21,7 @@ export interface Analysis {
   provider?: string | null;
   model?: string | null;
   completed_items?: number[];
+  tags?: string[];
 }
 
 export interface UploadResponse {

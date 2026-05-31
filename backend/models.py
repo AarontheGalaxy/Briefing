@@ -39,10 +39,15 @@ class AnalysisResponse(BaseModel):
     provider: Optional[str] = None
     model: Optional[str] = None
     completed_items: list[int] = []
+    tags: list[str] = []
 
 
 class UpdateCompletedItemsRequest(BaseModel):
     completed: list[int]
+
+
+class UpdateTagsRequest(BaseModel):
+    tags: list[str]
 
 
 class HistoryListResponse(BaseModel):

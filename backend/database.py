@@ -52,6 +52,13 @@ async def init_db() -> None:
         except aiosqlite.OperationalError:
             pass  # column already exists
 
+        try:
+            await db.execute(
+                "ALTER TABLE analyses ADD COLUMN tags TEXT DEFAULT '[]'"
+            )
+        except aiosqlite.OperationalError:
+            pass  # column already exists
+
         # FTS5 virtual table for full-text search
         await db.execute("""
             CREATE VIRTUAL TABLE IF NOT EXISTS analyses_fts USING fts5(

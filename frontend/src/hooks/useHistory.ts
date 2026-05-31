@@ -21,25 +21,26 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
-export function usePaginatedHistory(search = "") {
+export function usePaginatedHistory(search = "", tag = "") {
   const [page, setPage] = useState(1);
   const [allItems, setAllItems] = useState<Analysis[]>([]);
   const [total, setTotal] = useState(0);
   const debouncedSearch = useDebounce(search, 300);
-  const prevSearch = useRef(debouncedSearch);
+  const prevKey = useRef(`${debouncedSearch}||${tag}`);
 
   const { data, isFetching } = useQuery<HistoryListResponse, Error>({
-    queryKey: ["history", page, PAGE_SIZE, debouncedSearch],
-    queryFn: () => fetchHistory(page, PAGE_SIZE, debouncedSearch),
+    queryKey: ["history", page, PAGE_SIZE, debouncedSearch, tag],
+    queryFn: () => fetchHistory(page, PAGE_SIZE, debouncedSearch, tag),
   });
 
   useEffect(() => {
-    if (prevSearch.current !== debouncedSearch) {
+    const key = `${debouncedSearch}||${tag}`;
+    if (prevKey.current !== key) {
       setPage(1);
       setAllItems([]);
-      prevSearch.current = debouncedSearch;
+      prevKey.current = key;
     }
-  }, [debouncedSearch]);
+  }, [debouncedSearch, tag]);
 
   useEffect(() => {
     if (!data) return;

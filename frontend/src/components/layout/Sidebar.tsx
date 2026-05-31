@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from "react";
-import { Plus, Settings, Clock, Trash2, Search } from "lucide-react";
+import { Plus, Settings, Clock, Trash2, Search, X } from "lucide-react";
 import { usePaginatedHistory, useDeleteAnalysis } from "@/hooks/useHistory";
 import { formatDate, truncate } from "@/lib/utils";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
@@ -20,7 +20,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentAnalysis,
 }) => {
   const [search, setSearch] = useState("");
-  const { allItems: historyItems, hasMore, isFetching, loadMore } = usePaginatedHistory(search);
+  const [activeTag, setActiveTag] = useState("");
+  const { allItems: historyItems, hasMore, isFetching, loadMore } = usePaginatedHistory(search, activeTag);
   const deleteMutation = useDeleteAnalysis();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
@@ -84,17 +85,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        <div className="px-3 py-2">
+        <div className="px-3 py-2 space-y-1.5">
           <div className="flex items-center gap-2 bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5">
             <Search className="w-3 h-3 text-zinc-500 shrink-0" />
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setActiveTag(""); }}
               placeholder="Search history..."
               className="bg-transparent text-xs text-zinc-300 placeholder-zinc-600 outline-none w-full"
             />
           </div>
+          {activeTag && (
+            <button
+              onClick={() => setActiveTag("")}
+              className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              <X className="w-3 h-3" /> #{activeTag}
+            </button>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto px-2">
@@ -123,6 +132,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <Clock className="w-2.5 h-2.5" />
                     {formatDate(item.created_at)}
                   </p>
+                  {item.tags && item.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {item.tags.slice(0, 3).map((tag) => (
+                        <button
+                          key={tag}
+                          onClick={(e) => { e.stopPropagation(); setActiveTag(tag); }}
+                          className="text-xs text-zinc-500 hover:text-blue-400 transition-colors"
+                        >
+                          #{tag}
+                        </button>
+                      ))}
+                      {item.tags.length > 3 && (
+                        <span className="text-xs text-zinc-600">+{item.tags.length - 3}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <button
                   className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-red-400 transition-opacity shrink-0"
