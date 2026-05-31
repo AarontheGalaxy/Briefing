@@ -3,6 +3,7 @@ import { Plus, Settings, Clock, Trash2 } from "lucide-react";
 import { useHistory, useDeleteAnalysis } from "@/hooks/useHistory";
 import { formatDate, truncate } from "@/lib/utils";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
+import { toast } from "sonner";
 import type { Analysis } from "@/types";
 
 interface SidebarProps {
@@ -77,8 +78,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-red-400 transition-opacity shrink-0"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (selectedId === item.id) onSelectAnalysis(null);
-                  deleteMutation.mutate(item.id);
+                  toast("Delete this analysis?", {
+                    action: {
+                      label: "Delete",
+                      onClick: () => {
+                        if (selectedId === item.id) onSelectAnalysis(null);
+                        deleteMutation.mutate(item.id);
+                      },
+                    },
+                    cancel: { label: "Cancel", onClick: () => {} },
+                    duration: 5000,
+                  });
                 }}
               >
                 <Trash2 className="w-3 h-3" />
