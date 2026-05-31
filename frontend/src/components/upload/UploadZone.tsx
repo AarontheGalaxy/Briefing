@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from "react";
 import { Upload, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { uploadFile } from "@/lib/api";
+import { uploadFile, getErrorMessage } from "@/lib/api";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { useSettingsStore } from "@/store/settingsStore";
 import { ModelSelector } from "./ModelSelector";
@@ -44,8 +44,8 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onAnalysisComplete }) =>
       setUploadedText(result.text);
       setUploadedFileName(result.file_name);
       setUploadedWordCount(result.word_count);
-    } catch {
-      toast.error("Failed to upload file. Please try again.");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to upload file. Please try again."));
     } finally {
       setUploading(false);
     }
@@ -76,9 +76,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onAnalysisComplete }) =>
       });
       onAnalysisComplete(result);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Analysis failed. Please try again.";
-      toast.error(message);
+      toast.error(getErrorMessage(err, "Analysis failed. Please try again."));
     }
   };
 

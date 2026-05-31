@@ -3,6 +3,13 @@ import type { Analysis, AnalyzeRequest, HistoryListResponse, UploadResponse } fr
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
+export function getErrorMessage(err: unknown, fallback: string): string {
+  if (axios.isAxiosError(err)) {
+    return err.response?.data?.detail ?? fallback;
+  }
+  return fallback;
+}
+
 export const api = axios.create({
   baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
