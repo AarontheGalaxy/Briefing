@@ -47,18 +47,25 @@ async def list_history(
     offset = (page - 1) * limit
     async with db_connection() as db:
         if search:
-            pattern = f"%{search}%"
+            # Append * for prefix matching, escape FTS special chars
+            fts_query = " ".join(
+                f'"{token}"*' for token in search.replace('"', '""').split() if token
+            )
             async with db.execute(
-                "SELECT COUNT(*) FROM analyses WHERE summary LIKE ? OR file_name LIKE ?",
-                (pattern, pattern),
+                """SELECT COUNT(*) FROM analyses
+                   WHERE rowid IN (SELECT rowid FROM analyses_fts WHERE analyses_fts MATCH ?)""",
+                (fts_query,),
             ) as cursor:
                 total_row = await cursor.fetchone()
                 total = total_row[0] if total_row else 0
 
             async with db.execute(
-                """SELECT * FROM analyses WHERE summary LIKE ? OR file_name LIKE ?
-                   ORDER BY created_at DESC LIMIT ? OFFSET ?""",
-                (pattern, pattern, limit, offset),
+                """SELECT analyses.* FROM analyses
+                   JOIN analyses_fts ON analyses.rowid = analyses_fts.rowid
+                   WHERE analyses_fts MATCH ?
+                   ORDER BY analyses_fts.rank
+                   LIMIT ? OFFSET ?""",
+                (fts_query, limit, offset),
             ) as cursor:
                 rows = await cursor.fetchall()
         else:
