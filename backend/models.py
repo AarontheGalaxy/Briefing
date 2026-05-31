@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class UploadResponse(BaseModel):
@@ -21,6 +21,21 @@ class AnalyzeRequest(BaseModel):
     model: str = "llama3.1"
     api_key: Optional[str] = None
     meeting_type: str = "general"
+
+    @field_validator("text")
+    @classmethod
+    def text_must_not_be_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("text must not be empty or whitespace")
+        return v
+
+    @field_validator("meeting_type")
+    @classmethod
+    def meeting_type_must_be_valid(cls, v: str) -> str:
+        allowed = {"general", "sales", "one_on_one", "sprint_review", "board"}
+        if v not in allowed:
+            raise ValueError(f"meeting_type must be one of {sorted(allowed)}")
+        return v
 
 
 class AnalysisResponse(BaseModel):
