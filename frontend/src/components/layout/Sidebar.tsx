@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Plus, Settings, Clock, Trash2 } from "lucide-react";
-import { useHistory, useDeleteAnalysis } from "@/hooks/useHistory";
+import { usePaginatedHistory, useDeleteAnalysis } from "@/hooks/useHistory";
 import { formatDate, truncate } from "@/lib/utils";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { toast } from "sonner";
@@ -19,15 +19,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onNewAnalysis,
   currentAnalysis,
 }) => {
-  const { data } = useHistory();
+  const { allItems: historyItems, hasMore, isFetching, loadMore } = usePaginatedHistory();
   const deleteMutation = useDeleteAnalysis();
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const allItems = [
-    ...(currentAnalysis && !data?.items.find((i) => i.id === currentAnalysis.id)
+    ...(currentAnalysis && !historyItems.find((i) => i.id === currentAnalysis.id)
       ? [currentAnalysis]
       : []),
-    ...(data?.items ?? []),
+    ...historyItems,
   ];
 
   return (
@@ -52,7 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto px-2">
-          {allItems.length === 0 && (
+          {allItems.length === 0 && !isFetching && (
             <p className="px-2 py-3 text-xs text-zinc-600">No analyses yet.</p>
           )}
           {allItems.map((item) => (
@@ -95,6 +95,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </button>
             </div>
           ))}
+          {hasMore && (
+            <button
+              onClick={loadMore}
+              disabled={isFetching}
+              className="w-full mt-1 py-1.5 text-xs text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 rounded transition-colors disabled:opacity-40"
+            >
+              {isFetching ? "Loading..." : "Load more"}
+            </button>
+          )}
         </div>
 
         <div className="border-t border-zinc-800 px-3 py-3">
