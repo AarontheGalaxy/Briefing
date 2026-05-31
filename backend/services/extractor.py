@@ -17,7 +17,11 @@ async def extract_text(file_content: bytes, filename: str) -> Tuple[str, int]:
     elif ext == "docx":
         text = _extract_docx(file_content)
     elif ext in ("txt", "md"):
-        text = file_content.decode("utf-8").strip()
+        try:
+            text = file_content.decode("utf-8").strip()
+        except UnicodeDecodeError:
+            # Fall back to latin-1 which never fails on arbitrary bytes
+            text = file_content.decode("latin-1").strip()
     else:
         raise ValueError("Only PDF, DOCX, and TXT files are supported.")
 
