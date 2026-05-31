@@ -1,4 +1,6 @@
 import json
+from uuid import UUID
+
 from fastapi import APIRouter, HTTPException, Query
 from database import get_db
 from models import AnalysisResponse, ActionItem, HistoryListResponse
@@ -60,11 +62,11 @@ async def list_history(
 
 
 @router.get("/history/{analysis_id}", response_model=AnalysisResponse)
-async def get_analysis(analysis_id: str) -> AnalysisResponse:
+async def get_analysis(analysis_id: UUID) -> AnalysisResponse:
     db = await get_db()
     try:
         async with db.execute(
-            "SELECT * FROM analyses WHERE id = ?", (analysis_id,)
+            "SELECT * FROM analyses WHERE id = ?", (str(analysis_id),)
         ) as cursor:
             row = await cursor.fetchone()
     finally:
@@ -77,18 +79,18 @@ async def get_analysis(analysis_id: str) -> AnalysisResponse:
 
 
 @router.delete("/history/{analysis_id}")
-async def delete_analysis(analysis_id: str) -> dict:
+async def delete_analysis(analysis_id: UUID) -> dict:
     db = await get_db()
     try:
         async with db.execute(
-            "SELECT id FROM analyses WHERE id = ?", (analysis_id,)
+            "SELECT id FROM analyses WHERE id = ?", (str(analysis_id),)
         ) as cursor:
             row = await cursor.fetchone()
 
         if not row:
             raise HTTPException(status_code=404, detail="Analysis not found.")
 
-        await db.execute("DELETE FROM analyses WHERE id = ?", (analysis_id,))
+        await db.execute("DELETE FROM analyses WHERE id = ?", (str(analysis_id),))
         await db.commit()
     finally:
         await db.close()
