@@ -5,6 +5,7 @@ import { uploadFile, getErrorMessage } from "@/lib/api";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { useSettingsStore } from "@/store/settingsStore";
 import { ModelSelector } from "./ModelSelector";
+import { BatchUpload } from "./BatchUpload";
 import { toast } from "sonner";
 import type { Analysis, MeetingType } from "@/types";
 
@@ -24,7 +25,7 @@ interface UploadZoneProps {
 }
 
 export const UploadZone: React.FC<UploadZoneProps> = ({ onAnalysisComplete }) => {
-  const [activeTab, setActiveTab] = useState<"file" | "text">("file");
+  const [activeTab, setActiveTab] = useState<"file" | "text" | "batch">("file");
   const [dragActive, setDragActive] = useState(false);
   const [uploadedText, setUploadedText] = useState<string | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
@@ -103,7 +104,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onAnalysisComplete }) =>
       </div>
 
       <div className="flex gap-1 mb-4 border-b border-zinc-800 pb-0">
-        {(["file", "text"] as const).map((tab) => (
+        {(["file", "text", "batch"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -114,7 +115,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onAnalysisComplete }) =>
                 : "border-transparent text-zinc-500 hover:text-zinc-300"
             )}
           >
-            {tab === "file" ? "Upload File" : "Paste Text"}
+            {tab === "file" ? "Upload File" : tab === "text" ? "Paste Text" : "Batch"}
           </button>
         ))}
       </div>
@@ -178,6 +179,8 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onAnalysisComplete }) =>
         </div>
       )}
 
+      {activeTab === "batch" && <BatchUpload meetingType={meetingType} />}
+
       {activeTab === "text" && (
         <div className="relative">
           <textarea
@@ -193,7 +196,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onAnalysisComplete }) =>
         </div>
       )}
 
-      <div className="mt-4 flex items-center justify-between gap-4">
+      {activeTab !== "batch" && <div className="mt-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <ModelSelector />
           <select
@@ -218,7 +221,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onAnalysisComplete }) =>
         >
           {isLoading ? "Analyzing..." : "Analyze"}
         </button>
-      </div>
+      </div>}
     </div>
   );
 };
