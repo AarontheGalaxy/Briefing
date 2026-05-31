@@ -1,4 +1,6 @@
 import React from "react";
+import { Copy, Check } from "lucide-react";
+import { useCopy } from "@/hooks/useCopy";
 
 interface SummaryProps {
   summary: string;
@@ -19,6 +21,8 @@ export const Summary: React.FC<SummaryProps> = ({
   processingTimeMs,
   wordCount,
 }) => {
+  const { copied, copy } = useCopy();
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -30,6 +34,13 @@ export const Summary: React.FC<SummaryProps> = ({
           <span className="text-xs text-zinc-600 font-mono">
             {wordCount.toLocaleString()} words · {(processingTimeMs / 1000).toFixed(1)}s
           </span>
+          <button
+            onClick={() => copy(summary)}
+            className="text-zinc-600 hover:text-zinc-300 transition-colors"
+            title="Copy summary"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
         </div>
       </div>
       <p className="text-sm leading-relaxed text-zinc-300">{summary}</p>

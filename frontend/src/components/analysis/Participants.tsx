@@ -1,4 +1,6 @@
 import React from "react";
+import { Copy, Check } from "lucide-react";
+import { useCopy } from "@/hooks/useCopy";
 
 interface ParticipantsProps {
   participants: string[];
@@ -13,13 +15,24 @@ export const Participants: React.FC<ParticipantsProps> = ({
   nextMeeting,
   keyDecisions,
 }) => {
+  const { copied, copy } = useCopy();
+
   return (
     <div className="space-y-4">
       {keyDecisions.length > 0 && (
         <div className="space-y-2">
-          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-            Key Decisions
-          </span>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              Key Decisions
+            </span>
+            <button
+              onClick={() => copy(keyDecisions.map((d, i) => `${i + 1}. ${d}`).join("\n"))}
+              className="text-zinc-600 hover:text-zinc-300 transition-colors"
+              title="Copy key decisions"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+          </div>
           <div className="space-y-1.5">
             {keyDecisions.map((decision, i) => (
               <div key={i} className="border-l-2 border-zinc-700 pl-3">

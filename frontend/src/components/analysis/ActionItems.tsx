@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { Copy, Check } from "lucide-react";
+import { useCopy } from "@/hooks/useCopy";
 import type { ActionItem } from "@/types";
 
 interface ActionItemsProps {
@@ -13,6 +15,7 @@ const PRIORITY_DOT: Record<string, string> = {
 
 export const ActionItems: React.FC<ActionItemsProps> = ({ items }) => {
   const [checked, setChecked] = useState<Set<number>>(new Set());
+  const { copied, copy } = useCopy();
 
   const toggle = (i: number) => {
     setChecked((prev) => {
@@ -21,6 +24,15 @@ export const ActionItems: React.FC<ActionItemsProps> = ({ items }) => {
       return next;
     });
   };
+
+  const copyText = items
+    .map((item, i) => {
+      const status = checked.has(i) ? "[x]" : "[ ]";
+      const assignee = item.assignee ? ` — ${item.assignee}` : "";
+      const due = item.due_date ? ` (${item.due_date})` : "";
+      return `${status} ${item.task}${assignee}${due}`;
+    })
+    .join("\n");
 
   if (items.length === 0) {
     return (
@@ -35,9 +47,18 @@ export const ActionItems: React.FC<ActionItemsProps> = ({ items }) => {
 
   return (
     <div className="space-y-3">
-      <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-        Action Items
-      </span>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+          Action Items
+        </span>
+        <button
+          onClick={() => copy(copyText)}
+          className="text-zinc-600 hover:text-zinc-300 transition-colors"
+          title="Copy action items"
+        >
+          {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+        </button>
+      </div>
       <div className="space-y-1">
         {items.map((item, i) => (
           <div
