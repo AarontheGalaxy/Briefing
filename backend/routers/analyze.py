@@ -4,8 +4,10 @@ import time
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 import httpx
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 logger = logging.getLogger(__name__)
 
@@ -16,10 +18,12 @@ from services.parser import build_prompt, parse_llm_response
 from config import settings
 
 router = APIRouter(prefix="/api", tags=["analyze"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/analyze", response_model=AnalysisResponse)
-async def analyze(request: AnalyzeRequest) -> AnalysisResponse:
+@limiter.limit("10/minute")
+async def analyze(http_request: Request, request: AnalyzeRequest) -> AnalysisResponse:
     ollama_url = settings.ollama_base_url
 
     prompt = build_prompt(request.text)

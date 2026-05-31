@@ -1,13 +1,17 @@
 from fastapi import APIRouter, File, Request, UploadFile, HTTPException
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from models import UploadResponse
 from services.extractor import extract_text, MAX_FILE_SIZE_BYTES
 
 SUPPORTED_EXTENSIONS = {"pdf", "docx", "txt", "md"}
 
 router = APIRouter(prefix="/api", tags=["upload"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/upload", response_model=UploadResponse)
+@limiter.limit("20/minute")
 async def upload_file(request: Request, file: UploadFile = File(...)) -> UploadResponse:
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > MAX_FILE_SIZE_BYTES:
