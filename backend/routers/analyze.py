@@ -24,18 +24,18 @@ limiter = Limiter(key_func=get_remote_address)
 
 @router.post("/analyze", response_model=AnalysisResponse)
 @limiter.limit("10/minute")
-async def analyze(http_request: Request, request: AnalyzeRequest) -> AnalysisResponse:  # noqa: ARG001
+async def analyze(request: Request, body: AnalyzeRequest) -> AnalysisResponse:
     ollama_url = settings.ollama_base_url
 
-    prompt = build_prompt(request.text, request.meeting_type)
+    prompt = build_prompt(body.text, body.meeting_type)
     start = time.monotonic()
 
     try:
         raw = await call_llm(
             prompt=prompt,
-            provider=request.provider,
-            model=request.model,
-            api_key=request.api_key,
+            provider=body.provider,
+            model=body.model,
+            api_key=body.api_key,
             ollama_url=ollama_url,
         )
     except httpx.ConnectError as exc:
@@ -92,7 +92,7 @@ async def analyze(http_request: Request, request: AnalyzeRequest) -> AnalysisRes
 
     analysis_id = str(uuid.uuid4())
     created_at = datetime.now(timezone.utc).isoformat()
-    word_count = len(request.text.split())
+    word_count = len(body.text.split())
 
     async with db_connection() as db:
         await db.execute(
@@ -114,8 +114,8 @@ async def analyze(http_request: Request, request: AnalyzeRequest) -> AnalysisRes
                 json.dumps(parsed.get("topics_discussed", [])),
                 parsed.get("next_meeting"),
                 parsed.get("sentiment", "neutral"),
-                request.provider,
-                request.model,
+                body.provider,
+                body.model,
                 elapsed_ms,
                 created_at,
             ),
@@ -134,8 +134,8 @@ async def analyze(http_request: Request, request: AnalyzeRequest) -> AnalysisRes
         created_at=created_at,
         word_count=word_count,
         processing_time_ms=elapsed_ms,
-        provider=request.provider,
-        model=request.model,
+        provider=body.provider,
+        model=body.model,
     )
 
     # Fire webhook asynchronously — failure is silent and never blocks the response
