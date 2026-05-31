@@ -1,0 +1,42 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist the SQLite database across container restarts
+      - briefing_data:/app/data
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./data/meetings.db
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1}
+      - DEFAULT_PROVIDER=${DEFAULT_PROVIDER:-ollama}
+      - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-50}
+    # Allows the backend to reach Ollama running on the host machine
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Reachable from the user's browser, not from inside Docker
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  briefing_data:
