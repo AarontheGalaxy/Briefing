@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { Plus, Settings, Clock, Trash2, Search } from "lucide-react";
 import { usePaginatedHistory, useDeleteAnalysis } from "@/hooks/useHistory";
 import { formatDate, truncate } from "@/lib/utils";
@@ -23,6 +23,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { allItems: historyItems, hasMore, isFetching, loadMore } = usePaginatedHistory(search);
   const deleteMutation = useDeleteAnalysis();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
+  const timeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  const handleDelete = useCallback((item: Analysis) => {
+    if (selectedId === item.id) onSelectAnalysis(null);
+
+    setPendingDeletes((prev) => new Set(prev).add(item.id));
+
+    const timeoutId = setTimeout(() => {
+      deleteMutation.mutate(item.id);
+      setPendingDeletes((prev) => {
+        const next = new Set(prev);
+        next.delete(item.id);
+        return next;
+      });
+      timeouts.current.delete(item.id);
+    }, 5000);
+
+    timeouts.current.set(item.id, timeoutId);
+
+    toast("Analysis deleted.", {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          clearTimeout(timeouts.current.get(item.id));
+          timeouts.current.delete(item.id);
+          setPendingDeletes((prev) => {
+            const next = new Set(prev);
+            next.delete(item.id);
+            return next;
+          });
+        },
+      },
+      duration: 5000,
+    });
+  }, [selectedId, onSelectAnalysis, deleteMutation]);
 
   const allItems = [
     ...(currentAnalysis && !historyItems.find((i) => i.id === currentAnalysis.id)
@@ -65,46 +101,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {allItems.length === 0 && !isFetching && (
             <p className="px-2 py-3 text-xs text-zinc-600">No analyses yet.</p>
           )}
-          {allItems.map((item) => (
-            <div
-              key={item.id}
-              className={`group flex items-start justify-between gap-1 px-2 py-2 rounded cursor-pointer transition-colors ${
-                selectedId === item.id
-                  ? "bg-zinc-800 text-zinc-100"
-                  : "text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200"
-              }`}
-              onClick={() => onSelectAnalysis(item.id)}
-            >
-              <div className="min-w-0 flex-1">
-                <p className="text-xs truncate text-zinc-300">
-                  {truncate(item.summary || item.file_name || "Untitled", 40)}
-                </p>
-                <p className="text-xs text-zinc-600 mt-0.5 flex items-center gap-1">
-                  <Clock className="w-2.5 h-2.5" />
-                  {formatDate(item.created_at)}
-                </p>
-              </div>
-              <button
-                className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-red-400 transition-opacity shrink-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toast("Delete this analysis?", {
-                    action: {
-                      label: "Delete",
-                      onClick: () => {
-                        if (selectedId === item.id) onSelectAnalysis(null);
-                        deleteMutation.mutate(item.id);
-                      },
-                    },
-                    cancel: { label: "Cancel", onClick: () => {} },
-                    duration: 5000,
-                  });
-                }}
+          {allItems.map((item) => {
+            const isPending = pendingDeletes.has(item.id);
+            return (
+              <div
+                key={item.id}
+                className={`group flex items-start justify-between gap-1 px-2 py-2 rounded cursor-pointer transition-all ${
+                  isPending
+                    ? "opacity-30 pointer-events-none"
+                    : selectedId === item.id
+                    ? "bg-zinc-800 text-zinc-100"
+                    : "text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200"
+                }`}
+                onClick={() => !isPending && onSelectAnalysis(item.id)}
               >
-                <Trash2 className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs truncate text-zinc-300">
+                    {truncate(item.summary || item.file_name || "Untitled", 40)}
+                  </p>
+                  <p className="text-xs text-zinc-600 mt-0.5 flex items-center gap-1">
+                    <Clock className="w-2.5 h-2.5" />
+                    {formatDate(item.created_at)}
+                  </p>
+                </div>
+                <button
+                  className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-red-400 transition-opacity shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(item);
+                  }}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            );
+          })}
           {hasMore && (
             <button
               onClick={loadMore}
