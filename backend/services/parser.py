@@ -2,32 +2,35 @@ import json
 import re
 from typing import Any
 
-ANALYSIS_PROMPT = """You are a meeting analysis assistant. Analyze the following meeting transcript or notes and respond ONLY with the JSON structure below. Do not add any other text, explanation, or markdown.
+MAX_TRANSCRIPT_CHARS = 80_000
 
-Transcript:
-{transcript}
+_SYSTEM_INSTRUCTIONS = """You are a meeting analysis assistant. Analyze the meeting transcript provided after the separator and respond ONLY with the JSON structure below. Do not add any other text, explanation, or markdown.
 
 JSON format:
-{{
+{
   "summary": "3-5 sentence summary of the meeting",
   "key_decisions": ["decision 1", "decision 2"],
   "action_items": [
-    {{
+    {
       "task": "Task description",
       "assignee": "Person name or null",
       "due_date": "date or null",
       "priority": "high|medium|low"
-    }}
+    }
   ],
   "participants": ["name1", "name2"],
   "topics_discussed": ["topic 1", "topic 2"],
   "next_meeting": "date or null",
   "sentiment": "positive|neutral|negative"
-}}"""
+}"""
+
+_SEPARATOR = "--- TRANSCRIPT START ---"
 
 
 def build_prompt(transcript: str) -> str:
-    return ANALYSIS_PROMPT.format(transcript=transcript)
+    # Truncate oversized transcripts before they reach the LLM
+    safe_transcript = transcript[:MAX_TRANSCRIPT_CHARS]
+    return f"{_SYSTEM_INSTRUCTIONS}\n\n{_SEPARATOR}\n{safe_transcript}"
 
 
 def _extract_json_block(text: str) -> str | None:

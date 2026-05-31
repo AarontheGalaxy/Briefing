@@ -33,19 +33,31 @@ async def analyze(request: AnalyzeRequest) -> AnalysisResponse:
             api_key=request.api_key,
             ollama_url=ollama_url,
         )
-    except httpx.ConnectError:
+    except httpx.ConnectError as exc:
         raise HTTPException(
             status_code=503,
             detail="Could not connect to Ollama. Make sure Ollama is running.",
-        )
+        ) from exc
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except Exception as exc:
-        logger.error("LLM analysis failed: %s", str(exc), exc_info=True)
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
         error_msg = str(exc)
-        if "api_key" in error_msg.lower() or "authentication" in error_msg.lower() or "invalid_api_key" in error_msg.lower():
-            raise HTTPException(status_code=401, detail="API key is invalid or quota is exhausted.")
-        raise HTTPException(status_code=500, detail="LLM call failed. Check that your provider is running and your API key is valid.")
+        safe_msg = error_msg if "sk-" not in error_msg else "[redacted]"
+        logger.error("LLM analysis failed: %s", safe_msg)
+        auth_err = (
+            "api_key" in error_msg.lower()
+            or "authentication" in error_msg.lower()
+            or "invalid_api_key" in error_msg.lower()
+        )
+        if auth_err:
+            raise HTTPException(
+                status_code=401,
+                detail="API key is invalid or quota is exhausted.",
+            ) from exc
+        raise HTTPException(
+            status_code=500,
+            detail="LLM call failed. Check that your provider is running and your API key is valid.",
+        ) from exc
 
     elapsed_ms = int((time.monotonic() - start) * 1000)
 
