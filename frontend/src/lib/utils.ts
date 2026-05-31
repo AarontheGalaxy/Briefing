@@ -81,3 +81,62 @@ export function downloadFile(content: string, filename: string, mime: string) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+export function printAnalysis(a: Analysis): void {
+  const title = a.file_name ?? "Meeting Analysis";
+  const date = formatDate(a.created_at);
+
+  const actionItemsHtml = a.action_items.length
+    ? `<ul>${a.action_items
+        .map(
+          (item) =>
+            `<li><strong>[${item.priority}]</strong> ${item.task}${item.assignee ? ` — <em>${item.assignee}</em>` : ""}${item.due_date ? ` (${item.due_date})` : ""}</li>`
+        )
+        .join("")}</ul>`
+    : "<p><em>No action items.</em></p>";
+
+  const decisionsHtml = a.key_decisions.length
+    ? `<ol>${a.key_decisions.map((d) => `<li>${d}</li>`).join("")}</ol>`
+    : "<p><em>None.</em></p>";
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>${title}</title>
+  <style>
+    body { font-family: Georgia, serif; max-width: 720px; margin: 40px auto; color: #111; font-size: 14px; line-height: 1.6; }
+    h1 { font-size: 22px; margin-bottom: 4px; }
+    .meta { color: #555; font-size: 12px; margin-bottom: 24px; }
+    h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.05em; color: #555; border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-top: 24px; }
+    ul, ol { padding-left: 20px; }
+    li { margin-bottom: 4px; }
+    .tags span { display: inline-block; background: #f0f0f0; border: 1px solid #ddd; border-radius: 999px; padding: 1px 8px; font-size: 11px; margin-right: 4px; }
+    @media print { body { margin: 20px; } }
+  </style>
+</head>
+<body>
+  <h1>${title}</h1>
+  <div class="meta">${date} · ${a.sentiment} · ${a.word_count.toLocaleString()} words${a.provider ? ` · ${a.provider}/${a.model}` : ""}</div>
+  ${a.tags && a.tags.length ? `<div class="tags">${a.tags.map((t) => `<span>#${t}</span>`).join("")}</div><br/>` : ""}
+  <h2>Summary</h2>
+  <p>${a.summary}</p>
+  <h2>Key Decisions</h2>
+  ${decisionsHtml}
+  <h2>Action Items</h2>
+  ${actionItemsHtml}
+  <h2>Participants</h2>
+  <p>${a.participants.join(", ") || "—"}</p>
+  <h2>Topics Discussed</h2>
+  <p>${a.topics_discussed.join(", ") || "—"}</p>
+  ${a.next_meeting ? `<h2>Next Meeting</h2><p>${a.next_meeting}</p>` : ""}
+</body>
+</html>`;
+
+  const win = window.open("", "_blank");
+  if (!win) return;
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 250);
+}

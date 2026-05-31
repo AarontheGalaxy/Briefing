@@ -1,10 +1,10 @@
 import React from "react";
-import { FileDown, Braces } from "lucide-react";
+import { FileDown, Braces, Printer } from "lucide-react";
 import { Summary } from "./Summary";
 import { ActionItems } from "./ActionItems";
 import { Participants } from "./Participants";
 import { TagEditor } from "./TagEditor";
-import { analysisToMarkdown, downloadFile } from "@/lib/utils";
+import { analysisToMarkdown, downloadFile, printAnalysis } from "@/lib/utils";
 import type { Analysis } from "@/types";
 
 interface AnalysisResultProps {
@@ -48,6 +48,14 @@ export const AnalysisResult: React.FC<AnalysisResultProps> = ({ analysis, onSele
           >
             <Braces className="w-3.5 h-3.5" />
             JSON
+          </button>
+          <button
+            onClick={() => printAnalysis(analysis)}
+            className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-200 transition-colors"
+            title="Print analysis"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            Print
           </button>
         </div>
       </div>
