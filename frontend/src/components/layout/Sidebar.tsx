@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, Settings, Clock, Trash2 } from "lucide-react";
+import { Plus, Settings, Clock, Trash2, Search } from "lucide-react";
 import { usePaginatedHistory, useDeleteAnalysis } from "@/hooks/useHistory";
 import { formatDate, truncate } from "@/lib/utils";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
@@ -19,7 +19,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onNewAnalysis,
   currentAnalysis,
 }) => {
-  const { allItems: historyItems, hasMore, isFetching, loadMore } = usePaginatedHistory();
+  const [search, setSearch] = useState("");
+  const { allItems: historyItems, hasMore, isFetching, loadMore } = usePaginatedHistory(search);
   const deleteMutation = useDeleteAnalysis();
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -47,8 +48,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        <div className="px-4 py-2">
-          <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider">History</span>
+        <div className="px-3 py-2">
+          <div className="flex items-center gap-2 bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5">
+            <Search className="w-3 h-3 text-zinc-500 shrink-0" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search history..."
+              className="bg-transparent text-xs text-zinc-300 placeholder-zinc-600 outline-none w-full"
+            />
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-2">

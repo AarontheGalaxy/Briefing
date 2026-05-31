@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchHistory, deleteAnalysis } from "@/lib/api";
 import type { Analysis, HistoryListResponse } from "@/types";
@@ -12,15 +12,34 @@ export function useHistory(page = 1, limit = 20) {
 
 const PAGE_SIZE = 20;
 
-export function usePaginatedHistory() {
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
+}
+
+export function usePaginatedHistory(search = "") {
   const [page, setPage] = useState(1);
   const [allItems, setAllItems] = useState<Analysis[]>([]);
   const [total, setTotal] = useState(0);
+  const debouncedSearch = useDebounce(search, 300);
+  const prevSearch = useRef(debouncedSearch);
 
   const { data, isFetching } = useQuery<HistoryListResponse, Error>({
-    queryKey: ["history", page, PAGE_SIZE],
-    queryFn: () => fetchHistory(page, PAGE_SIZE),
+    queryKey: ["history", page, PAGE_SIZE, debouncedSearch],
+    queryFn: () => fetchHistory(page, PAGE_SIZE, debouncedSearch),
   });
+
+  useEffect(() => {
+    if (prevSearch.current !== debouncedSearch) {
+      setPage(1);
+      setAllItems([]);
+      prevSearch.current = debouncedSearch;
+    }
+  }, [debouncedSearch]);
 
   useEffect(() => {
     if (!data) return;
@@ -31,10 +50,9 @@ export function usePaginatedHistory() {
   }, [data, page]);
 
   const loadMore = () => setPage((p) => p + 1);
-  const reset = () => { setPage(1); setAllItems([]); };
   const hasMore = allItems.length < total;
 
-  return { allItems, total, hasMore, isFetching, loadMore, reset };
+  return { allItems, total, hasMore, isFetching, loadMore };
 }
 
 export function useDeleteAnalysis() {

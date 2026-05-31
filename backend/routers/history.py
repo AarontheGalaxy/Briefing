@@ -41,18 +41,35 @@ def _row_to_analysis(row: dict) -> AnalysisResponse:
 async def list_history(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
+    search: str = Query("", max_length=200),
 ) -> HistoryListResponse:
     offset = (page - 1) * limit
     async with db_connection() as db:
-        async with db.execute("SELECT COUNT(*) FROM analyses") as cursor:
-            total_row = await cursor.fetchone()
-            total = total_row[0] if total_row else 0
+        if search:
+            pattern = f"%{search}%"
+            async with db.execute(
+                "SELECT COUNT(*) FROM analyses WHERE summary LIKE ? OR file_name LIKE ?",
+                (pattern, pattern),
+            ) as cursor:
+                total_row = await cursor.fetchone()
+                total = total_row[0] if total_row else 0
 
-        async with db.execute(
-            "SELECT * FROM analyses ORDER BY created_at DESC LIMIT ? OFFSET ?",
-            (limit, offset),
-        ) as cursor:
-            rows = await cursor.fetchall()
+            async with db.execute(
+                """SELECT * FROM analyses WHERE summary LIKE ? OR file_name LIKE ?
+                   ORDER BY created_at DESC LIMIT ? OFFSET ?""",
+                (pattern, pattern, limit, offset),
+            ) as cursor:
+                rows = await cursor.fetchall()
+        else:
+            async with db.execute("SELECT COUNT(*) FROM analyses") as cursor:
+                total_row = await cursor.fetchone()
+                total = total_row[0] if total_row else 0
+
+            async with db.execute(
+                "SELECT * FROM analyses ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                (limit, offset),
+            ) as cursor:
+                rows = await cursor.fetchall()
 
     items = [_row_to_analysis(dict(row)) for row in rows]
     return HistoryListResponse(items=items, total=total, page=page, limit=limit)

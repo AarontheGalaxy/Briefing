@@ -29,9 +29,9 @@ export async function analyzeText(request: AnalyzeRequest): Promise<Analysis> {
   return data;
 }
 
-export async function fetchHistory(page = 1, limit = 20): Promise<HistoryListResponse> {
+export async function fetchHistory(page = 1, limit = 20, search = ""): Promise<HistoryListResponse> {
   const { data } = await api.get<HistoryListResponse>("/api/history", {
-    params: { page, limit },
+    params: { page, limit, ...(search ? { search } : {}) },
   });
   return data;
 }
