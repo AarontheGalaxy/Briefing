@@ -9,7 +9,7 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-from database import get_db
+from database import db_connection
 from models import AnalysisResponse, AnalyzeRequest, ActionItem
 from services.llm import call_llm
 from services.parser import build_prompt, parse_llm_response
@@ -56,14 +56,14 @@ async def analyze(request: AnalyzeRequest) -> AnalysisResponse:
             ) from exc
         raise HTTPException(
             status_code=500,
-            detail="LLM call failed. Check that your provider is running and your API key is valid.",
+            detail="LLM call failed. Check provider is running and API key is valid.",
         ) from exc
 
     elapsed_ms = int((time.monotonic() - start) * 1000)
 
     try:
         parsed = parse_llm_response(raw)
-    except Exception:
+    except (ValueError, KeyError, TypeError):
         parsed = {
             "summary": raw[:500],
             "key_decisions": [],
@@ -89,8 +89,7 @@ async def analyze(request: AnalyzeRequest) -> AnalysisResponse:
     created_at = datetime.now(timezone.utc).isoformat()
     word_count = len(request.text.split())
 
-    db = await get_db()
-    try:
+    async with db_connection() as db:
         await db.execute(
             """
             INSERT INTO analyses
@@ -117,8 +116,6 @@ async def analyze(request: AnalyzeRequest) -> AnalysisResponse:
             ),
         )
         await db.commit()
-    finally:
-        await db.close()
 
     return AnalysisResponse(
         id=analysis_id,

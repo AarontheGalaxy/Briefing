@@ -1,5 +1,6 @@
 import aiosqlite
-import os
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 DB_PATH = "meetings.db"
 
@@ -8,6 +9,16 @@ async def get_db() -> aiosqlite.Connection:
     db = await aiosqlite.connect(DB_PATH)
     db.row_factory = aiosqlite.Row
     return db
+
+
+@asynccontextmanager
+async def db_connection() -> AsyncGenerator[aiosqlite.Connection, None]:
+    db = await aiosqlite.connect(DB_PATH)
+    db.row_factory = aiosqlite.Row
+    try:
+        yield db
+    finally:
+        await db.close()
 
 
 async def init_db() -> None:

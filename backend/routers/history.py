@@ -2,7 +2,7 @@ import json
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
-from database import get_db
+from database import db_connection
 from models import AnalysisResponse, ActionItem, HistoryListResponse
 
 router = APIRouter(prefix="/api", tags=["history"])
@@ -43,8 +43,7 @@ async def list_history(
     limit: int = Query(20, ge=1, le=100),
 ) -> HistoryListResponse:
     offset = (page - 1) * limit
-    db = await get_db()
-    try:
+    async with db_connection() as db:
         async with db.execute("SELECT COUNT(*) FROM analyses") as cursor:
             total_row = await cursor.fetchone()
             total = total_row[0] if total_row else 0
@@ -54,8 +53,6 @@ async def list_history(
             (limit, offset),
         ) as cursor:
             rows = await cursor.fetchall()
-    finally:
-        await db.close()
 
     items = [_row_to_analysis(dict(row)) for row in rows]
     return HistoryListResponse(items=items, total=total, page=page, limit=limit)
@@ -63,14 +60,11 @@ async def list_history(
 
 @router.get("/history/{analysis_id}", response_model=AnalysisResponse)
 async def get_analysis(analysis_id: UUID) -> AnalysisResponse:
-    db = await get_db()
-    try:
+    async with db_connection() as db:
         async with db.execute(
             "SELECT * FROM analyses WHERE id = ?", (str(analysis_id),)
         ) as cursor:
             row = await cursor.fetchone()
-    finally:
-        await db.close()
 
     if not row:
         raise HTTPException(status_code=404, detail="Analysis not found.")
@@ -80,8 +74,7 @@ async def get_analysis(analysis_id: UUID) -> AnalysisResponse:
 
 @router.delete("/history/{analysis_id}")
 async def delete_analysis(analysis_id: UUID) -> dict:
-    db = await get_db()
-    try:
+    async with db_connection() as db:
         async with db.execute(
             "SELECT id FROM analyses WHERE id = ?", (str(analysis_id),)
         ) as cursor:
@@ -92,7 +85,5 @@ async def delete_analysis(analysis_id: UUID) -> dict:
 
         await db.execute("DELETE FROM analyses WHERE id = ?", (str(analysis_id),))
         await db.commit()
-    finally:
-        await db.close()
 
     return {"deleted": True}
