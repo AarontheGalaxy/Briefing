@@ -13,7 +13,10 @@ const App: React.FC = () => {
 
   const { data: fetchedAnalysis } = useQuery<Analysis, Error>({
     queryKey: ["analysis", selectedId],
-    queryFn: () => fetchAnalysis(selectedId!),
+    queryFn: () => {
+      if (!selectedId) throw new Error("No analysis selected");
+      return fetchAnalysis(selectedId);
+    },
     enabled: !!selectedId,
   });
 
