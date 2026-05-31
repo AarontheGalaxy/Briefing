@@ -146,7 +146,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ open, onClose }) =
                   {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
               </div>
-              <p className="text-xs text-zinc-600">Stored in browser only — never sent to our servers.</p>
+              <p className="text-xs text-zinc-600">Kept in memory for this session only — cleared when you close the tab.</p>
             </div>
           )}
 

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import type { Provider, SettingsState } from "@/types";
 
 interface SettingsStore extends SettingsState {
@@ -23,10 +23,12 @@ export const useSettingsStore = create<SettingsStore>()(
     }),
     {
       name: "briefing-settings",
+      // sessionStorage: clears when the tab is closed, never written to disk
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         provider: state.provider,
         model: state.model,
-        apiKey: state.apiKey,
+        // apiKey intentionally excluded — not persisted anywhere
         ollamaUrl: state.ollamaUrl,
       }),
     }
