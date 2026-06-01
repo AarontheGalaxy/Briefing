@@ -1,6 +1,6 @@
 # Briefing
 
-> **Toplantı notlarınızı yapay zeka ile analiz edin.** PDF, Word veya metin dosyanızı yükleyin — Briefing birkaç saniye içinde özet, kararlar, aksiyon maddeleri, katılımcılar ve duygu analizi çıkarır.
+> Analyze your meeting notes with artificial intelligence. Upload your PDF, Word, or text file. Briefing extracts summaries, decisions, action items, participants, and sentiment analysis in seconds.
 
 [![CI](https://github.com/AarontheGalaxy/briefing/actions/workflows/ci.yml/badge.svg)](https://github.com/AarontheGalaxy/briefing/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
@@ -9,115 +9,115 @@
 
 ---
 
-## İçindekiler
+## Table of Contents
 
-1. [Briefing Nedir?](#briefing-nedir)
-2. [Özellikler](#özellikler)
-3. [Desteklenen Platformlar](#desteklenen-platformlar)
-4. [Mimari ve Çalışma Mantığı](#mimari-ve-çalışma-mantığı)
-5. [Gereksinimler — Kurulmadan Önce Ne Lazım?](#gereksinimler--kurulmadan-önce-ne-lazım)
-6. [Hızlı Başlangıç — Docker ile (Önerilen)](#hızlı-başlangıç--docker-ile-önerilen)
-7. [Manuel Kurulum — Adım Adım](#manuel-kurulum--adım-adım)
+1. [What is Briefing?](#what-is-briefing)
+2. [Features](#features)
+3. [Supported Platforms](#supported-platforms)
+4. [Architecture and Working Logic](#architecture-and-working-logic)
+5. [Requirements - What is Needed Before Installation?](#requirements-what-is-needed-before-installation)
+6. [Quick Start - With Docker (Recommended)](#quick-start-with-docker-recommended)
+7. [Manual Installation - Step by Step](#manual-installation-step-by-step)
    - [macOS](#macos)
    - [Windows](#windows)
    - [Linux (Ubuntu / Debian)](#linux-ubuntu--debian)
-8. [LLM Sağlayıcı Kurulumu](#llm-sağlayıcı-kurulumu)
-   - [Ollama — Ücretsiz, Yerel](#ollama--ücretsiz-yerel)
+8. [LLM Provider Setup](#llm-provider-setup)
+   - [Ollama - Free and Local](#ollama-free-and-local)
    - [OpenAI](#openai)
    - [Anthropic](#anthropic)
-9. [Yapılandırma Referansı](#yapılandırma-referansı)
-10. [Briefing'i Kullanmak — Adım Adım](#briefingi-kullanmak--adım-adım)
-11. [API Referansı](#api-referansı)
-12. [Webhook Entegrasyonu](#webhook-entegrasyonu)
-13. [Testleri Çalıştırmak](#testleri-çalıştırmak)
+9. [Configuration Reference](#configuration-reference)
+10. [Using Briefing - Step by Step](#using-briefing-step-by-step)
+11. [API Reference](#api-reference)
+12. [Webhook Integration](#webhook-integration)
+13. [Running Tests](#running-tests)
 14. [CI / CD](#ci--cd)
-15. [Docker — Üretim Ortamı](#docker--üretim-ortamı)
-16. [Proje Yapısı](#proje-yapısı)
-17. [Teknik Yığın](#teknik-yığın)
-18. [Sorun Giderme](#sorun-giderme)
-19. [Güvenlik](#güvenlik)
-20. [Katkıda Bulunmak](#katkıda-bulunmak)
-21. [Lisans](#lisans)
+15. [Docker - Production Environment](#docker-production-environment)
+16. [Project Structure](#project-structure)
+17. [Technical Stack](#technical-stack)
+18. [Troubleshooting](#troubleshooting)
+19. [Security](#security)
+20. [Contributing](#contributing)
+21. [License](#license)
 
 ---
 
-## Briefing Nedir?
+## What is Briefing?
 
-Briefing, ham toplantı transkriptlerini yapılandırılmış, eyleme dönüştürülebilir bilgiye çeviren bir web uygulamasıdır.
+Briefing is a web application that transforms raw meeting transcripts into structured, actionable information.
 
-Şunları yapabilirsiniz:
-- PDF, Word (DOCX), Markdown veya düz metin dosyası yükleyin
-- Ya da notlarınızı doğrudan yapıştırın
-- Bir LLM sağlayıcı seçin (ücretsiz yerel ya da bulut tabanlı)
-- Saniyeler içinde aşağıdakileri alın:
+You can:
+- Upload PDF, Word (DOCX), Markdown, or plain text files
+- Directly paste your notes
+- Choose an LLM provider (free local or cloud-based)
+- Receive the following results in seconds:
 
-| Çıktı | Açıklama |
+| Output | Description |
 |-------|---------|
-| **Özet** | Toplantının 3-5 cümlelik özeti |
-| **Temel Kararlar** | Alınan kararların numaralı listesi |
-| **Aksiyon Maddeleri** | Görev, kişi, son tarih ve öncelik bilgisiyle |
-| **Katılımcılar** | İsimler otomatik tanımlanır |
-| **Konular** | Tartışılan konuların listesi |
-| **Sonraki Toplantı** | Eğer metinde geçiyorsa tarih çıkarılır |
-| **Duygu Analizi** | Pozitif / Nötr / Negatif |
+| **Summary** | A 3 to 5 sentence summary of the meeting |
+| **Key Decisions** | A numbered list of decisions made |
+| **Action Items** | Tasks including assignee, deadline, and priority |
+| **Participants** | Names are automatically identified |
+| **Topics** | A list of topics discussed |
+| **Next Meeting** | Date extraction if mentioned in the text |
+| **Sentiment Analysis** | Positive / Neutral / Negative |
 
-Tüm sonuçlar yerel SQLite veritabanına kaydedilir. Verileriniz Ollama kullanıyorsanız bilgisayarınızdan hiç ayrılmaz.
-
----
-
-## Özellikler
-
-### Analiz
-- **Çoklu format desteği:** PDF, DOCX, TXT, MD — 50 MB'a kadar (ayarlanabilir)
-- **Metin yapıştırma:** 100.000 karaktere kadar doğrudan not veya transkript girişi
-- **Toplu analiz (Batch):** Birden fazla dosyayı sıraya alın, tek tıkla hepsini analiz edin; başarısız olan dosyaları tek tek yeniden deneyin
-- **Toplantı tipi şablonları:** Genel, Satış, 1:1, Sprint Review, Yönetim Kurulu — her format için farklı prompt
-- **İptal butonu:** Analiz başladıktan sonra istediğiniz zaman iptal edin
-- **İlerleme:** İşlem süresi ve kelime sayısı anlık gösterilir
-
-### Geçmiş ve Organizasyon
-- **Kalıcı geçmiş:** Her analiz SQLite'a kaydedilir, yeniden başlatmadan sonra kaybolmaz
-- **Tam metin arama (FTS5):** Özet, dosya adı, kararlar, konular ve katılımcılarda arama — prefix matching ile
-- **Etiket sistemi:** Analizlere etiket ekleyin; sidebar'da etikete tıklayarak filtreleme yapın
-- **Aksiyon maddesi takibi:** Maddeleri işaretleyin; durum veritabanına kaydedilir
-- **Katılımcı takibi:** Bir isme tıklayın — o kişinin katıldığı tüm toplantıları görün
-- **Sayfalama:** Geçmiş 20'şer öğe yüklenir; "Daha Fazla Yükle" butonu ile devam
-- **Silmeyi Geri Al:** Silme ikonu yerine 5 saniyelik "Geri Al" toast'u gösterilir
-
-### Dışa Aktarma
-- **Markdown export:** `.md` dosyası olarak indir
-- **JSON export:** Ham veriyi `.json` olarak indir
-- **Yazdır:** Temiz, yazıcı dostu HTML sayfası açılır
-- **Panoya kopyala:** Özet, kararlar ve aksiyon maddelerini tek tıkla kopyala
-
-### Ayarlar ve Entegrasyon
-- **Üç LLM sağlayıcı:** Ollama (yerel, ücretsiz), OpenAI, Anthropic
-- **Oturum bazlı API anahtarları:** Anahtarlar yalnızca sekme açıkken tutulur, hiçbir sunucuya gönderilmez
-- **Webhook bildirimleri:** Her başarılı analizden sonra istediğiniz URL'ye POST gönderir
-- **Bağlantı testi:** Sağlayıcı ve model ayarlarını kaydetmeden önce test edin
+All results are saved to a local SQLite database. If you use Ollama, your data never leaves your computer.
 
 ---
 
-## Desteklenen Platformlar
+## Features
 
-| Platform | Sürüm | Durum |
+### Analysis
+- **Multi-format support:** PDF, DOCX, TXT, MD up to 50 MB (configurable)
+- **Text pasting:** Direct entry of notes or transcripts up to 100,000 characters
+- **Batch analysis:** Queue multiple files and analyze them all with one click. Retry failed files individually
+- **Meeting type templates:** General, Sales, 1:1, Sprint Review, Board Meeting. Different prompts for each format
+- **Cancel button:** Cancel the analysis at any time after it starts
+- **Progress tracking:** Real-time display of processing time and word count
+
+### History and Organization
+- **Persistent history:** Every analysis is saved to SQLite and is not lost after restart
+- **Full-text search (FTS5):** Search through summaries, file names, decisions, topics, and participants with prefix matching
+- **Tag system:** Add tags to analyses and filter by clicking tags in the sidebar
+- **Action item tracking:** Mark items as completed. The status is saved in the database
+- **Participant tracking:** Click a name to see all meetings that person attended
+- **Pagination:** History loads 20 items at a time with a "Load More" button
+- **Undo Delete:** A 5-second "Undo" toast notification is shown instead of an immediate deletion icon
+
+### Exporting
+- **Markdown export:** Download as an .md file
+- **JSON export:** Download raw data as a .json file
+- **Print:** Opens a clean, printer-friendly HTML page
+- **Copy to clipboard:** One-click copy for summaries, decisions, and action items
+
+### Settings and Integration
+- **Three LLM providers:** Ollama (local, free), OpenAI, Anthropic
+- **Session-based API keys:** Keys are only kept while the tab is open and are never sent to any server except the provider
+- **Webhook notifications:** Sends a POST request to your desired URL after every successful analysis
+- **Connection test:** Test provider and model settings before saving
+
+---
+
+## Supported Platforms
+
+| Platform | Version | Status |
 |----------|-------|-------|
-| **macOS** | 12 Monterey ve üzeri | ✅ Tam destek |
-| **macOS** | 11 Big Sur | ⚠️ Çalışır ama test edilmedi |
-| **Windows** | 10 (21H2+) | ✅ Tam destek |
-| **Windows** | 11 | ✅ Tam destek |
-| **Ubuntu** | 22.04 LTS | ✅ Tam destek |
-| **Ubuntu** | 20.04 LTS | ✅ Çalışır |
-| **Debian** | 11+ | ✅ Çalışır |
-| **Fedora** | 38+ | ⚠️ Test edilmedi ama çalışmalı |
-| **Windows** | 7 / 8 | ❌ Desteklenmiyor |
-| **macOS** | 10.x | ❌ Desteklenmiyor |
+| **macOS** | 12 Monterey and above | Full support |
+| **macOS** | 11 Big Sur | Works but not tested |
+| **Windows** | 10 (21H2+) | Full support |
+| **Windows** | 11 | Full support |
+| **Ubuntu** | 22.04 LTS | Full support |
+| **Ubuntu** | 20.04 LTS | Works |
+| **Debian** | 11+ | Works |
+| **Fedora** | 38+ | Not tested but should work |
+| **Windows** | 7 / 8 | Not supported |
+| **macOS** | 10.x | Not supported |
 
-### Tarayıcı Desteği
+### Browser Support
 
-Briefing modern bir web uygulamasıdır. Aşağıdaki tarayıcılar desteklenmektedir:
+Briefing is a modern web application. The following browsers are supported:
 
-| Tarayıcı | Minimum Sürüm |
+| Browser | Minimum Version |
 |----------|--------------|
 | Google Chrome | 90+ |
 | Mozilla Firefox | 88+ |
@@ -125,232 +125,206 @@ Briefing modern bir web uygulamasıdır. Aşağıdaki tarayıcılar desteklenmek
 | Safari | 14+ |
 | Opera | 76+ |
 
-> **Not:** Internet Explorer desteklenmemektedir.
+Note: Internet Explorer is not supported.
 
-### Donanım Gereksinimleri
+### Hardware Requirements
 
-| Bileşen | Minimum | Önerilen |
+| Component | Minimum | Recommended |
 |---------|---------|---------|
 | RAM | 4 GB | 8 GB+ |
-| Disk | 2 GB boş alan | 5 GB+ (Ollama model için) |
-| CPU | Herhangi modern işlemci | — |
-| GPU | Gerekli değil | Ollama için hız artışı sağlar |
+| Disk | 2 GB free space | 5 GB+ (for Ollama models) |
+| CPU | Any modern processor | N/A |
+| GPU | Not required | Provides speed increase for Ollama |
 
-> Ollama ile büyük bir model (llama3.1 70B) çalıştırıyorsanız 32+ GB RAM gerekebilir. Küçük modeller (llama3.2:3b) 4 GB RAM ile çalışır.
+If you are running a large model (llama3.1 70B) with Ollama, 32+ GB RAM may be required. Smaller models (llama3.2:3b) work with 4 GB RAM.
 
 ---
 
-## Mimari ve Çalışma Mantığı
+## Architecture and Working Logic
 
 ```
-Tarayıcınız (React + Vite)
-       │
-       │  HTTP istekleri (REST + JSON / multipart)
-       ▼
+Your Browser (React + Vite)
+       |
+       |  HTTP requests (REST + JSON / multipart)
+       v
   FastAPI (Python 3.12)
-       ├── /api/upload     → PDF/DOCX/TXT metni çıkarır
-       ├── /api/analyze    → LLM'e gönderir, cevabı işler
-       ├── /api/history/*  → Geçmiş analizi yönetir
-       └── /api/settings/* → Model listesi, bağlantı testi, webhook
-              │
-              ▼
+       ├── /api/upload     -> Extracts text from PDF/DOCX/TXT
+       ├── /api/analyze    -> Sends to LLM and processes response
+       ├── /api/history/*  -> Manages history analysis
+       └── /api/settings/* -> Model list, connection test, webhook
+              |
+              v
         SQLite (meetings.db)
-          ├── analyses       — analiz sonuçları
-          ├── analyses_fts   — FTS5 arama indeksi
-          └── app_settings   — webhook URL gibi ayarlar
+          ├── analyses       - analysis results
+          ├── analyses_fts   - FTS5 search index
+          └── app_settings   - settings like webhook URL
 ```
 
-**Bir analizin akışı:**
-1. Dosya → `/api/upload` → metin çıkarılır
-2. Metin → `/api/analyze` → LLM prompt'u oluşturulur
-3. LLM → JSON cevabı döner → parse edilir → SQLite'a kaydedilir
-4. FTS5 tetikleyiciler (trigger) yeni satırı otomatik indeksler
-5. Webhook (varsa) arka planda, cevabı bloklamadan gönderilir
-6. Sonuç tarayıcıya döner, sidebar güncellenir
+**Flow of an analysis:**
+1. File -> /api/upload -> text is extracted
+2. Text -> /api/analyze -> LLM prompt is generated
+3. LLM -> JSON response is returned -> parsed -> saved to SQLite
+4. FTS5 triggers automatically index the new row
+5. Webhook (if any) is sent in the background without blocking the response
+6. Result is returned to the browser and the sidebar is updated
 
 ---
 
-## Gereksinimler — Kurulmadan Önce Ne Lazım?
+## Requirements - What is Needed Before Installation?
 
-### Docker kullanıyorsanız
-Sadece **Docker Desktop** kurun — başka hiçbir şey gerekmez.
+### If using Docker
+Only install **Docker Desktop**. Nothing else is required.
 
-### Manuel kurulum için
+### For manual installation
 
-| Yazılım | Neden Lazım? | İndirme Linki |
+| Software | Purpose | Download Link |
 |---------|-------------|---------------|
-| **Python 3.12** | Backend sunucuyu çalıştırmak için | [python.org/downloads](https://www.python.org/downloads/) |
-| **Node.js 20** | Frontend arayüzü derlemek için | [nodejs.org](https://nodejs.org/) |
-| **Git** | Projeyi indirmek için | [git-scm.com](https://git-scm.com/) |
-| **Ollama** (opsiyonel) | Ücretsiz yerel AI modeli çalıştırmak için | [ollama.ai](https://ollama.ai) |
+| **Python 3.12** | To run the backend server | [python.org/downloads](https://www.python.org/downloads/) |
+| **Node.js 20** | To compile the frontend interface | [nodejs.org](https://nodejs.org/) |
+| **Git** | To download the project | [git-scm.com](https://git-scm.com/) |
+| **Ollama** (optional) | To run free local AI models | [ollama.ai](https://ollama.ai) |
 
-> **Python kurulurken dikkat (Windows):** "Add Python to PATH" kutucuğunu **mutlaka** işaretleyin. Yoksa `python` komutu çalışmaz.
+Attention for Windows users during Python installation: You must check the "Add Python to PATH" box. Otherwise, the python command will not work.
 
-> **Node.js kurulurken dikkat:** LTS (Long Term Support) sürümünü seçin.
+Attention for Node.js installation: Choose the LTS (Long Term Support) version.
 
-Kurulumları doğrulamak için terminal/komut istemcisine şunları yazın:
+Verify installations by typing the following in your terminal or command prompt:
 
 ```
-python --version    → Python 3.12.x çıkmalı
-node --version      → v20.x.x çıkmalı
-npm --version       → 10.x.x çıkmalı
-git --version       → git version 2.x.x çıkmalı
+python --version    -> Should display Python 3.12.x
+node --version      -> Should display v20.x.x
+npm --version       -> Should display 10.x.x
+git --version       -> Should display git version 2.x.x
 ```
-
-> **Terminal nerede?**
-> - **macOS:** Spotlight'a (Cmd+Space) "Terminal" yazın
-> - **Windows:** Başlat → "cmd" veya "PowerShell" yazın → Enter
-> - **Linux:** Ctrl+Alt+T
 
 ---
 
-## Hızlı Başlangıç — Docker ile (Önerilen)
+## Quick Start - With Docker (Recommended)
 
-Docker kullanıyorsanız tek bir komutla her şeyi çalıştırabilirsiniz.
+If you use Docker, you can run everything with a single command.
 
-### 1. Docker Desktop Kurun
+### 1. Install Docker Desktop
 
-- **macOS/Windows:** [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) adresinden indirin ve kurun
+- **macOS/Windows:** Download and install from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/)
 - **Ubuntu/Debian:**
   ```bash
   sudo apt-get update
   sudo apt-get install -y docker.io docker-compose-plugin
   sudo systemctl start docker
   sudo usermod -aG docker $USER
-  # Oturumu kapatıp açın
+  # Log out and log back in
   ```
 
-### 2. Projeyi İndirin
+### 2. Download the Project
 
 ```bash
 git clone https://github.com/AarontheGalaxy/briefing.git
 cd briefing
 ```
 
-### 3. Başlatın
+### 3. Start
 
 ```bash
 docker compose up --build
 ```
 
-İlk seferde birkaç dakika sürebilir (görüntüler indirilir ve derlenir). Şunu görünce hazırdır:
+It may take a few minutes for the first time as images are downloaded and compiled. It is ready when you see:
 
 ```
 frontend-1  | nginx started
 backend-1   | Application startup complete.
 ```
 
-### 4. Tarayıcıda Açın
+### 4. Open in Browser
 
-- **Uygulama:** [http://localhost:5173](http://localhost:5173)
-- **API Dokümantasyonu:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Application:** [http://localhost:5173](http://localhost:5173)
+- **API Documentation:** [http://localhost:8000/docs](http://localhost:8000/docs)
 
-### Durdurmak
+### Stopping
 
-Terminalde `Ctrl + C` tuşlarına basın. Veri kaybolmaz.
+Press `Ctrl + C` in the terminal. Data will not be lost.
 
-### Arka Planda Çalıştırmak
+### Running in Background
 
 ```bash
-docker compose up --build -d   # arka planda başlat
-docker compose down            # durdur (veri korunur)
-docker compose down -v         # durdur VE tüm veriyi sil
-docker compose logs -f         # logları takip et
+docker compose up --build -d   # start in background
+docker compose down            # stop (data is preserved)
+docker compose down -v         # stop AND delete all data
+docker compose logs -f         # follow logs
 ```
 
 ---
 
-## Manuel Kurulum — Adım Adım
+## Manual Installation - Step by Step
 
 ### macOS
 
-#### Terminal Açın
-
-`Cmd + Space` → "Terminal" yazın → Enter
-
-#### 1. Homebrew Kurun (Paket Yöneticisi)
-
-Homebrew olmadan da yapılabilir ama çok daha kolaylaşır:
+#### 1. Install Homebrew (Package Manager)
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Kurulum sırasında şifrenizi girmeniz istenebilir (ekranda görünmez, bu normaldir).
-
-#### 2. Python ve Node.js Kurun
+#### 2. Install Python and Node.js
 
 ```bash
 brew install python@3.12 node@20
 ```
 
-Doğrulayın:
+Verify:
 ```bash
 python3 --version   # Python 3.12.x
 node --version      # v20.x.x
 npm --version       # 10.x.x
 ```
 
-#### 3. Projeyi İndirin
+#### 3. Download the Project
 
 ```bash
 git clone https://github.com/AarontheGalaxy/briefing.git
 cd briefing
 ```
 
-#### 4. Backend Kurulumu
+#### 4. Backend Setup
 
 ```bash
 cd backend
 
-# Sanal ortam oluştur (projeyi diğer Python paketlerinden izole eder)
+# Create virtual environment
 python3 -m venv venv
 
-# Sanal ortamı etkinleştir
+# Activate virtual environment
 source venv/bin/activate
-# Terminalde (venv) öneki görünmelidir
 
-# Bağımlılıkları kur
+# Install dependencies
 pip install -r requirements.txt
 
-# .env dosyasını oluştur (varsayılan ayarlar zaten çalışır)
+# Create .env file
 cp .env.example .env
 ```
 
-#### 5. Backend'i Başlatın
+#### 5. Start the Backend
 
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Şunu görmelisiniz:
-```
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8000
-```
+Keep this terminal window open. Open a new terminal.
 
-Bu terminal penceresini **açık bırakın**. Yeni bir terminal açın.
-
-#### 6. Frontend Kurulumu (Yeni Terminalde)
+#### 6. Frontend Setup (In New Terminal)
 
 ```bash
-cd briefing/frontend    # projeyi nereye indirdiyseniz o yol
+cd briefing/frontend
 npm install
 ```
 
-#### 7. Frontend'i Başlatın
+#### 7. Start the Frontend
 
 ```bash
 npm run dev
 ```
 
-Şunu görmelisiniz:
-```
-  VITE v6.x.x  ready in xxx ms
-  ➜  Local:   http://localhost:5173/
-```
-
-#### 8. Tarayıcıda Açın
+#### 8. Open in Browser
 
 [http://localhost:5173](http://localhost:5173)
 
@@ -358,49 +332,33 @@ npm run dev
 
 ### Windows
 
-#### Komut İstemi Açın
+#### 1. Install Python
 
-`Windows Tuşu` → "cmd" yazın → Sağ tık → "Yönetici olarak çalıştır"
+1. Go to [python.org/downloads](https://www.python.org/downloads/)
+2. Click the "Download Python 3.12.x" button
+3. Run the downloaded .exe file
+4. IMPORTANT: Check the "Add Python to PATH" box
+5. Click "Install Now"
 
-#### 1. Python Kurun
+#### 2. Install Node.js
 
-1. [python.org/downloads](https://www.python.org/downloads/) adresine gidin
-2. "Download Python 3.12.x" butonuna tıklayın
-3. İndirilen .exe dosyasını çalıştırın
-4. **ÖNEMLİ:** "Add Python to PATH" kutucuğunu işaretleyin
-5. "Install Now" tıklayın
+1. Go to [nodejs.org](https://nodejs.org/)
+2. Click the "20.x.x LTS" button
+3. Run the downloaded .msi file and follow the instructions
+4. Check the "Automatically install the necessary tools" box
 
-Doğrulama (yeni bir cmd açın):
-```
-python --version    # Python 3.12.x görünmeli
-```
+#### 3. Install Git
 
-#### 2. Node.js Kurun
+Download and install from [git-scm.com](https://git-scm.com/).
 
-1. [nodejs.org](https://nodejs.org/) adresine gidin
-2. "20.x.x LTS" butonuna tıklayın
-3. İndirilen .msi dosyasını çalıştırın, Next Next Finish
-4. **"Automatically install the necessary tools"** kutucuğunu işaretleyin
-
-Doğrulama (yeni bir cmd açın):
-```
-node --version      # v20.x.x görünmeli
-npm --version       # 10.x.x görünmeli
-```
-
-#### 3. Git Kurun
-
-1. [git-scm.com](https://git-scm.com/) → "Download for Windows"
-2. Kurucuyu çalıştırın, tüm seçenekleri varsayılan bırakın
-
-#### 4. Projeyi İndirin
+#### 4. Download the Project
 
 ```
 git clone https://github.com/AarontheGalaxy/briefing.git
 cd briefing
 ```
 
-#### 5. Backend Kurulumu
+#### 5. Backend Setup
 
 ```
 cd backend
@@ -410,53 +368,42 @@ pip install -r requirements.txt
 copy .env.example .env
 ```
 
-#### 6. Backend'i Başlatın
+#### 6. Start the Backend
 
 ```
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Şunu görmelisiniz:
-```
-INFO:     Application startup complete.
-```
+Keep this window open. Open a new command prompt.
 
-Bu pencereyi **açık bırakın**. Yeni bir cmd penceresi açın.
-
-#### 7. Frontend Kurulumu (Yeni Pencerede)
+#### 7. Frontend Setup (In New Window)
 
 ```
 cd briefing\frontend
 npm install
 ```
 
-#### 8. Frontend'i Başlatın
+#### 8. Start the Frontend
 
 ```
 npm run dev
 ```
 
-#### 9. Tarayıcıda Açın
+#### 9. Open in Browser
 
 [http://localhost:5173](http://localhost:5173)
-
-> **Windows Güvenlik Duvarı Uyarısı:** Port 8000 için izin sorulursa "Özel Ağlar" için izin verin.
 
 ---
 
 ### Linux (Ubuntu / Debian)
 
-#### Terminal Açın
-
-`Ctrl + Alt + T`
-
-#### 1. Sistemi Güncelleyin
+#### 1. Update the System
 
 ```bash
 sudo apt-get update && sudo apt-get upgrade -y
 ```
 
-#### 2. Python 3.12 Kurun
+#### 2. Install Python 3.12
 
 ```bash
 sudo add-apt-repository ppa:deadsnakes/ppa -y
@@ -464,38 +411,27 @@ sudo apt-get update
 sudo apt-get install -y python3.12 python3.12-venv python3.12-pip
 ```
 
-Doğrulama:
-```bash
-python3.12 --version   # Python 3.12.x
-```
-
-#### 3. Node.js 20 Kurun
+#### 3. Install Node.js 20
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 
-Doğrulama:
-```bash
-node --version   # v20.x.x
-npm --version    # 10.x.x
-```
-
-#### 4. Git Kurun
+#### 4. Install Git
 
 ```bash
 sudo apt-get install -y git
 ```
 
-#### 5. Projeyi İndirin
+#### 5. Download the Project
 
 ```bash
 git clone https://github.com/AarontheGalaxy/briefing.git
 cd briefing
 ```
 
-#### 6. Backend Kurulumu
+#### 6. Backend Setup
 
 ```bash
 cd backend
@@ -505,15 +441,15 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-#### 7. Backend'i Başlatın
+#### 7. Start the Backend
 
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Yeni terminal açın:
+Open a new terminal.
 
-#### 8. Frontend Kurulumu
+#### 8. Frontend Setup
 
 ```bash
 cd briefing/frontend
@@ -521,866 +457,275 @@ npm install
 npm run dev
 ```
 
-#### 9. Tarayıcıda Açın
+#### 9. Open in Browser
 
 [http://localhost:5173](http://localhost:5173)
 
 ---
 
-## LLM Sağlayıcı Kurulumu
+## LLM Provider Setup
 
-Briefing üç farklı yapay zeka sağlayıcısıyla çalışır. Birini seçin.
+Briefing works with three different AI providers. Choose one.
 
-### Ollama — Ücretsiz, Yerel
+### Ollama - Free and Local
 
-Ollama modelleri bilgisayarınızda çalıştırır. İnternet bağlantısı veya API anahtarı gerektirmez. Verileriniz hiç dışarı çıkmaz.
+Ollama runs models on your computer. It does not require an internet connection or an API key. Your data never leaves your device.
 
-#### macOS'a Ollama Kurulumu
+#### Install Ollama
 
-1. [ollama.ai](https://ollama.ai) adresine gidin
-2. "Download for Mac" butonuna tıklayın
-3. İndirilen .dmg dosyasını açın, Ollama'yı Applications klasörüne sürükleyin
-4. Uygulamayı başlatın — menü çubuğunda bir lama simgesi belirecektir
+Download from [ollama.ai](https://ollama.ai) and follow the installation steps for your operating system.
 
-#### Windows'a Ollama Kurulumu
+#### Download a Model
 
-1. [ollama.ai](https://ollama.ai) adresine gidin
-2. "Download for Windows (Preview)" butonuna tıklayın
-3. İndirilen .exe dosyasını çalıştırın, kurulum tamamlanır
-
-#### Linux'a Ollama Kurulumu
+Once Ollama is installed, you need to download a model:
 
 ```bash
-curl -fsSL https://ollama.ai/install.sh | sh
-```
-
-#### Model İndirme
-
-Ollama kurulunca bir model indirmeniz gerekir:
-
-```bash
-# Önerilen — çoğu bilgisayar için ideal (yaklaşık 4.7 GB)
+# Recommended for most computers (approx. 4.7 GB)
 ollama pull llama3.1
 
-# Küçük bilgisayarlar için (yaklaşık 2.0 GB, 4 GB RAM yeterli)
+# For smaller computers (approx. 2.0 GB, 4 GB RAM sufficient)
 ollama pull llama3.2:3b
 
-# En küçük (yaklaşık 1.3 GB, 2 GB RAM yeterli ama kalite düşük)
+# Smallest (approx. 1.3 GB, 2 GB RAM sufficient but lower quality)
 ollama pull llama3.2:1b
 
-# En yüksek kalite (yaklaşık 40 GB, 32+ GB RAM gerekir)
+# Highest quality (approx. 40 GB, 32+ GB RAM required)
 ollama pull llama3.1:70b
 ```
 
-#### Ollama'nın Çalıştığını Doğrulama
+#### Using Ollama in Briefing
 
-```bash
-curl http://localhost:11434/api/tags
-```
-
-Şuna benzer bir çıktı görmelisiniz:
-```json
-{"models":[{"name":"llama3.1","..."}]}
-```
-
-#### Briefing'de Ollama Kullanmak
-
-1. Uygulamayı açın
-2. Sol alttaki ⚙ (Settings) simgesine tıklayın
-3. "Ollama (Local)" seçili olacaktır — değilse seçin
-4. "Test Connection" butonuna tıklayın → "Connection successful" görmelisiniz
-5. Model listesinden istediğiniz modeli seçin
+1. Open the application
+2. Click the Settings icon in the bottom left
+3. Select "Ollama (Local)"
+4. Click "Test Connection" to confirm it is working
+5. Select your desired model from the list
 
 ---
 
 ### OpenAI
 
-OpenAI'nin GPT modellerini kullanmak için bir API anahtarı gerekir. Kullandığınız kadar ücret ödersiniz.
+A GPT API key is required to use OpenAI models. You pay based on usage.
 
-#### API Anahtarı Almak
+#### Getting an API Key
 
-1. [platform.openai.com](https://platform.openai.com) adresine gidin
-2. Hesap oluşturun veya giriş yapın
-3. Sağ üstteki hesap simgesi → "View API Keys"
-4. "+ Create new secret key" butonuna tıklayın
-5. Anahtarı kopyalayın (tekrar gösterilemez, güvenli bir yere kaydedin)
-6. Hesabınıza biraz kredi yükleyin (Billing bölümünden)
+1. Go to [platform.openai.com](https://platform.openai.com)
+2. Create an account and go to API Keys
+3. Create a new secret key and save it securely
+4. Add some credits to your account
 
-#### Briefing'de OpenAI Kullanmak
+#### Using OpenAI in Briefing
 
-1. ⚙ Settings → "OpenAI" seçin
-2. API Key alanına anahtarınızı yapıştırın
-3. Model seçin: `gpt-4o-mini` çoğu kullanım için idealdir (hızlı ve uygun fiyatlı)
-4. "Test Connection" → "Connection successful"
+1. Settings -> Select "OpenAI"
+2. Paste your API key
+3. Select a model: gpt-4o-mini is recommended for most uses
+4. Click "Test Connection"
 
-| Model | Kalite | Hız | Maliyet |
-|-------|--------|-----|---------|
-| gpt-4o | En yüksek | Orta | Yüksek |
-| gpt-4o-mini | Yüksek | Hızlı | Düşük ⭐ |
-| gpt-4-turbo | Yüksek | Orta | Orta |
-| gpt-3.5-turbo | Orta | Çok hızlı | Çok düşük |
-
-> **Güvenlik:** API anahtarınız yalnızca tarayıcı sekmesi açıkken tutulur (`sessionStorage`). Sekmeyi kapatınca silinir. Hiçbir Briefing sunucusuna gönderilmez — doğrudan tarayıcınızdan OpenAI'ye gider.
+Security: Your API key is only stored in the browser session and is cleared when the tab is closed.
 
 ---
 
 ### Anthropic
 
-Anthropic'in Claude modellerini kullanmak için API anahtarı gerekir.
+An API key is required to use Claude models.
 
-#### API Anahtarı Almak
+#### Getting an API Key
 
-1. [console.anthropic.com](https://console.anthropic.com) adresine gidin
-2. Hesap oluşturun
-3. "API Keys" → "Create Key"
-4. Anahtarı kopyalayın
+1. Go to [console.anthropic.com](https://console.anthropic.com)
+2. Create an account and generate an API key
 
-#### Briefing'de Anthropic Kullanmak
+#### Using Anthropic in Briefing
 
-1. ⚙ Settings → "Anthropic" seçin
-2. API Key alanına anahtarınızı yapıştırın
-3. Model seçin: `claude-sonnet-4-6` kalite ve hız dengesi açısından önerilir
-4. "Test Connection" → "Connection successful"
-
-| Model | Kalite | Hız | Maliyet |
-|-------|--------|-----|---------|
-| claude-opus-4-7 | En yüksek | Yavaş | Yüksek |
-| claude-sonnet-4-6 | Çok yüksek | Orta | Orta ⭐ |
-| claude-3-5-sonnet | Yüksek | Hızlı | Orta |
-| claude-3-5-haiku | İyi | Çok hızlı | Düşük |
+1. Settings -> Select "Anthropic"
+2. Paste your API key
+3. Select a model: claude-sonnet-4-6 is recommended for balance
+4. Click "Test Connection"
 
 ---
 
-## Yapılandırma Referansı
+## Configuration Reference
 
-### Backend `.env` Dosyası
+### Backend .env File
 
-`backend/.env.example` dosyasını `backend/.env` olarak kopyalayın ve düzenleyin.
+Copy `backend/.env.example` to `backend/.env` and edit it.
 
-| Değişken | Varsayılan | Açıklama |
+| Variable | Default | Description |
 |----------|-----------|---------|
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama'nın çalıştığı adres. Güvenlik nedeniyle yalnızca localhost adresleri geçerlidir. |
-| `OLLAMA_MODEL` | `llama3.1` | Varsayılan Ollama modeli |
-| `DEFAULT_PROVIDER` | `ollama` | Arayüz açıldığında hangi sağlayıcı seçili gelsin (`ollama`, `openai`, `anthropic`) |
-| `DATABASE_URL` | `sqlite+aiosqlite:///./meetings.db` | Veritabanı dosya yolu. Docker'da otomatik değiştirilir. |
-| `MAX_FILE_SIZE_MB` | `50` | Yüklenebilecek maksimum dosya boyutu (MB) |
-| `CORS_ORIGINS` | `http://localhost:5173` | Hangi adreslerden bağlantıya izin verilsin. Virgülle ayrılmış liste. |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Address where Ollama is running |
+| `OLLAMA_MODEL` | `llama3.1` | Default Ollama model |
+| `DEFAULT_PROVIDER` | `ollama` | Default provider when opening the interface |
+| `DATABASE_URL` | `sqlite+aiosqlite:///./meetings.db` | Database file path |
+| `MAX_FILE_SIZE_MB` | `50` | Maximum file size for uploads |
+| `CORS_ORIGINS` | `http://localhost:5173` | Allowed connection origins |
 
-### Frontend `.env` Dosyası
+### Frontend .env File
 
-`frontend/.env.example` dosyasını `frontend/.env` olarak kopyalayın.
+Copy `frontend/.env.example` to `frontend/.env`.
 
-| Değişken | Varsayılan | Açıklama |
+| Variable | Default | Description |
 |----------|-----------|---------|
-| `VITE_API_URL` | `http://localhost:8000` | Backend sunucusunun adresi. Değiştirirseniz frontend'i yeniden build etmeniz gerekir. |
-
-> **ÖNEMLİ:** `.env` dosyalarını asla git'e eklemeyin. `.env.example` dosyaları (gerçek değer içermeyen şablonlar) git'e eklenebilir.
+| `VITE_API_URL` | `http://localhost:8000` | Address of the backend server |
 
 ---
 
-## Briefing'i Kullanmak — Adım Adım
+## Using Briefing - Step by Step
 
-### İlk Kez Açıyorsanız
+### First Time Use
 
-[http://localhost:5173](http://localhost:5173) adresini tarayıcınızda açın.
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-Sol tarafta **sidebar** (yan panel) görürsünüz:
-- Üstte "New Analysis" butonu
-- Ortada arama kutusu ve geçmiş listesi
-- Altta ⚙ Settings butonu
+- **Sidebar:** New Analysis button, search box, history list, and Settings button.
+- **Main Panel:** File upload or text paste area.
 
-Sağ tarafta **ana panel** bulunur — dosya yükleme veya metin yapıştırma alanı.
+### Analysis by Uploading a File
 
----
+1. Ensure the "Upload File" tab is selected in the main panel
+2. Drop your PDF, DOCX, TXT, or MD file into the upload zone
+3. Select the Meeting Type (General, Sales, 1:1, Sprint Review, Board Meeting)
+4. Choose your model and click "Analyze"
+5. Results will appear in the main panel within seconds
 
-### Dosya Yükleyerek Analiz
+### Analysis by Pasting Text
 
-1. Ana panelde **"Upload File"** sekmesi seçili olduğundan emin olun
-2. PDF, DOCX, TXT veya MD dosyanızı sürükle-bırak alanına bırakın  
-   — ya da alana tıklayın, dosya seçiciden seçin
-3. Dosya adı ve kelime sayısı görünür → dosya sunucuya yüklenmiştir
-4. **Meeting Type** (Toplantı Tipi) açılır listesinden toplantı türünü seçin:
-   - **General:** Genel amaçlı, her toplantı türü için
-   - **Sales:** Satış görüşmeleri, müşteri toplantıları
-   - **1:1:** Birebir görüşmeler, bireysel geri bildirim
-   - **Sprint Review:** Yazılım sprint değerlendirmeleri
-   - **Board Meeting:** Yönetim kurulu toplantıları
-5. Solda model seçiciyle istediğiniz modeli seçin
-6. **"Analyze"** butonuna tıklayın
-7. Analiz çalışırken "Analyzing…" görünür — **Cancel** butonu ile iptal edebilirsiniz
-8. Birkaç saniye içinde sonuçlar sağda belirir
+1. Click the "Paste Text" tab
+2. Paste or type your meeting notes (up to 100,000 characters)
+3. Follow the same steps as file upload to analyze
 
----
+### Batch Analysis
 
-### Metin Yapıştırarak Analiz
+1. Click the "Batch" tab
+2. Upload multiple files at once
+3. Click "Analyze N files" to process them sequentially
+4. Retry any failed files individually if necessary
 
-1. **"Paste Text"** sekmesine tıklayın
-2. Toplantı notlarınızı metin alanına yapıştırın veya yazın (max 100.000 karakter)
-3. Adım 4-8'i yukarıdaki gibi izleyin
+### Reviewing Results
+
+- **Tags:** Add tags to categorize your analysis
+- **Summary:** View a concise summary and sentiment analysis
+- **Action Items:** Track tasks and mark them as completed
+- **Participants:** Click names to see their meeting history
+- **Export:** Download results as Markdown or JSON, or print them
 
 ---
 
-### Toplu Analiz (Batch)
+## API Reference
 
-Aynı anda birden fazla dosyayı analiz etmek için:
+All endpoints start with the /api prefix. Swagger documentation is available at [http://localhost:8000/docs](http://localhost:8000/docs).
 
-1. **"Batch"** sekmesine tıklayın
-2. Birden fazla dosyayı sürükle-bırak alanına bırakın  
-   — veya alana tıklayıp birden fazla dosya seçin (Ctrl/Cmd basılı tutarak)
-3. Dosyalar sırayla listelenir, her biri "Pending" durumunda
-4. **"Analyze N files"** butonuna tıklayın
-5. Her dosya sırayla işlenir:
-   - `Uploading…` → `Analyzing…` → `Done` veya `Failed`
-6. Başarısız olan dosya varsa yanındaki **↺** (tekrar dene) simgesine tıklayın
-7. İşlem bitince "Batch complete" bildirimi görünür
-8. Tüm sonuçlar sol sidebar'da otomatik belirir
+### POST /api/upload
+Uploads a file and extracts its text.
+Rate limit: 20 requests per minute.
 
----
+### POST /api/analyze
+Analyzes text using an LLM.
+Rate limit: 10 requests per minute.
 
-### Sonuçları İncelemek
+### GET /api/history
+Lists past analyses with support for pagination, search, and tag filtering.
 
-Analiz tamamlanınca şunları göreceksiniz:
+### DELETE /api/history/{id}
+Deletes a specific analysis.
 
-**Tags (Etiketler)**
-- Analizin üstünde etiket giriş alanı
-- Etiketi yazıp Enter veya virgül ile ekleyin
-- Backspace ile son etiketi silin
-- Etiketler veritabanına kaydedilir
+### PATCH /api/history/{id}/tags
+Updates tags for an analysis.
 
-**Summary (Özet)**
-- Toplantının kısa özeti
-- Duygu göstergesi: `positive` / `neutral` / `negative`
-- İşlem süresi ve kelime sayısı
-- Sağ köşedeki 📋 simgesiyle kopyalayın
-
-**Action Items (Aksiyon Maddeleri)**
-- Görev, atanan kişi, son tarih, öncelik
-- Kutucukları işaretleyin — durum kaydedilir (yeniden açtığınızda korunur)
-- 📋 simgesiyle tüm listeyi kopyalayın
-
-**Participants (Katılımcılar)**
-- İsme tıklayın → o kişinin katıldığı tüm toplantıları gösteren modal açılır
-- Modalda bir toplantıya tıklayın → o analize geçiş yapılır
-
-**Dışa Aktarma**
-- **MD:** Markdown formatında indir
-- **JSON:** Ham veri olarak indir
-- **Print:** Yazdırmaya hazır sayfa açılır
+### PATCH /api/history/{id}/actions
+Updates completed status for action items.
 
 ---
 
-### Geçmişte Arama
+## Webhook Integration
 
-Sidebar'daki arama kutusuna yazmaya başlayın. Arama aşağıdakilerde yapılır:
-- Özet metni
-- Dosya adı
-- Temel kararlar
-- Konular
-- Katılımcı isimleri
+Configure a Webhook URL in Settings to receive automatic notifications after every successful analysis.
 
-Arama 300 ms gecikmeyle (debounce) çalışır. Silerseniz tüm geçmiş geri gelir.
+### Behavior
+- Webhooks are sent asynchronously
+- Timeout is 10 seconds
+- No retries on failure
+- Webhooks are not sent for failed analyses
 
----
-
-### Etiketle Filtreleme
-
-Bir analize etiket ekledikten sonra, sidebar'da o etiketin üzerine tıklayın. Yalnızca o etiketi taşıyan analizler görünür. Mavi etiket chips'e (üstte belirir) tıklayarak filtreyi kaldırın.
+### Security
+Localhost and private network ranges are blocked for webhook URLs to prevent server-side request forgery.
 
 ---
 
-### Analizi Silmek
+## Running Tests
 
-Sidebar'da bir analizin üzerine gelin → sağda ✕ simgesi belirir → tıklayın.
-
-5 saniyelik "Geri Al" toast'u görünür. İptal etmek için "Undo" tıklayın. Süre dolarsa analiz silinir.
-
----
-
-## API Referansı
-
-Tüm endpoint'ler `/api` prefixi ile başlar. Swagger dokümantasyonu: [http://localhost:8000/docs](http://localhost:8000/docs)
-
-### `POST /api/upload`
-
-Dosya yükler ve metni çıkarır.
-
-**Rate limit:** Dakikada 20 istek (IP bazlı)
-
-**İstek:** `multipart/form-data`
-
-| Alan | Tip | Zorunlu | Açıklama |
-|------|-----|---------|---------|
-| `file` | binary | ✅ | PDF, DOCX, TXT veya MD |
-
-**Başarılı Yanıt `200`:**
-```json
-{
-  "text": "Toplantı 10:00'da başladı...",
-  "word_count": 1243,
-  "file_name": "q1-toplanti.pdf"
-}
-```
-
-**Hata Yanıtları:**
-| Kod | Anlam |
-|-----|-------|
-| 400 | Desteklenmeyen dosya türü |
-| 413 | Dosya boyut limitini aştı |
-| 429 | Rate limit aşıldı |
-
----
-
-### `POST /api/analyze`
-
-Metni LLM ile analiz eder.
-
-**Rate limit:** Dakikada 10 istek (IP bazlı)
-
-**İstek gövdesi:**
-```json
-{
-  "text": "Toplantı transkripti...",
-  "provider": "ollama",
-  "model": "llama3.1",
-  "api_key": null,
-  "meeting_type": "general",
-  "file_name": "opsiyonel-dosya-adi.pdf"
-}
-```
-
-| Alan | Tip | Varsayılan | Açıklama |
-|------|-----|-----------|---------|
-| `text` | string | — | Transkript metni. Boş olamaz. |
-| `provider` | string | `"ollama"` | `"ollama"`, `"openai"` veya `"anthropic"` |
-| `model` | string | `"llama3.1"` | Sağlayıcıya özel model adı |
-| `api_key` | string\|null | `null` | OpenAI ve Anthropic için gerekli |
-| `meeting_type` | string | `"general"` | `"general"`, `"sales"`, `"one_on_one"`, `"sprint_review"`, `"board"` |
-| `file_name` | string\|null | `null` | Kayıt için kaynak dosya adı |
-
-**Başarılı Yanıt `200`:**
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "summary": "Takım Q1 sonuçlarını değerlendirdi ve lansman tarihini 15 Mart'a taşıdı.",
-  "key_decisions": ["15 Mart'ta lansman", "Alice demoyu yönetecek"],
-  "action_items": [
-    {
-      "task": "Demo ortamını hazırla",
-      "assignee": "Alice",
-      "due_date": "2025-03-10",
-      "priority": "high"
-    }
-  ],
-  "participants": ["Alice", "Bob", "Carol"],
-  "topics_discussed": ["Q1 Sonuçları", "Lansman Planı"],
-  "next_meeting": "22 Mart 10:00",
-  "sentiment": "positive",
-  "created_at": "2025-03-01T14:32:11.000Z",
-  "word_count": 1243,
-  "processing_time_ms": 4312,
-  "provider": "ollama",
-  "model": "llama3.1",
-  "file_name": "q1-toplanti.pdf",
-  "completed_items": [],
-  "tags": []
-}
-```
-
----
-
-### `GET /api/history`
-
-Geçmiş analizleri listeler.
-
-**Query Parametreleri:**
-
-| Parametre | Tip | Varsayılan | Açıklama |
-|-----------|-----|-----------|---------|
-| `page` | integer | `1` | Sayfa numarası |
-| `limit` | integer | `20` | Sayfa başına öğe (maks 100) |
-| `search` | string | `""` | FTS5 tam metin arama |
-| `tag` | string | `""` | Tam eşleşme etiket filtresi |
-
----
-
-### `GET /api/history/{id}`
-
-Tek bir analizi getirir. `id` geçerli UUID olmalıdır.
-
----
-
-### `DELETE /api/history/{id}`
-
-Bir analizi siler.
-
----
-
-### `PATCH /api/history/{id}/tags`
-
-Etiketleri günceller.
-
-```json
-{ "tags": ["q1", "satis", "acil"] }
-```
-
----
-
-### `PATCH /api/history/{id}/actions`
-
-Tamamlanan aksiyon maddelerini günceller.
-
-```json
-{ "completed": [0, 2] }
-```
-
-Dizi, sıfırdan başlayan indeksleri içerir.
-
----
-
-### `GET /api/participants/{name}/analyses`
-
-Belirli bir katılımcının geçmiş toplantılarını getirir.
-
----
-
-### `GET /api/settings/models`
-
-Bir sağlayıcı için mevcut modelleri listeler.
-
-`?provider=ollama` / `?provider=openai` / `?provider=anthropic`
-
----
-
-### `POST /api/settings/test`
-
-Sağlayıcı bağlantısını test eder.
-
-```json
-{
-  "provider": "openai",
-  "model": "gpt-4o-mini",
-  "api_key": "sk-...",
-  "ollama_url": null
-}
-```
-
----
-
-### `GET /api/settings/webhook`
-
-Mevcut webhook URL'sini getirir.
-
----
-
-### `PUT /api/settings/webhook`
-
-Webhook URL'sini ayarlar veya kaldırır.
-
-```json
-{ "url": "https://sunucunuz.com/webhook" }
-```
-
-`null` göndermek webhook'u kaldırır.
-
----
-
-### `GET /health`
-
-Sağlık kontrolü.
-
-```json
-{ "status": "ok" }
-```
-
----
-
-## Webhook Entegrasyonu
-
-Webhook ile her analizden sonra otomatik bildirim gönderebilirsiniz (Slack, Notion, n8n, Zapier vb.).
-
-### Kurulum
-
-1. ⚙ Settings → "Webhook URL" alanını bulun
-2. Endpoint URL'nizi girin (üretim için HTTPS önerilir)
-3. **Save** tıklayın
-
-### Gönderilen Veri
-
-```json
-{
-  "id": "...",
-  "summary": "...",
-  "key_decisions": ["..."],
-  "action_items": [{ "task": "...", "assignee": "...", "due_date": null, "priority": "high" }],
-  "participants": ["Alice"],
-  "sentiment": "positive",
-  "created_at": "2025-03-01T14:32:11.000Z",
-  "provider": "openai",
-  "model": "gpt-4o-mini"
-}
-```
-
-### Davranış
-
-- Webhook **asenkron** gönderilir — API yanıtını bloklamaz
-- Timeout: **10 saniye**
-- Başarısız olursa server loguna yazılır, yeniden deneme yoktur
-- Analiz başarısız olursa webhook gönderilmez
-
-### Güvenlik
-
-Webhook URL'si teslimattan önce doğrulanır:
-- `http://` ve `https://` izinli
-- `localhost`, `127.0.0.1`, `::1` **engellendi** (yerel servis taramasını önler)
-- `10.x`, `172.16.x`, `192.168.x` özel ağ aralıkları **engellendi**
-- AWS metadata endpoint (`169.254.169.254`) **engellendi**
-
----
-
-## Testleri Çalıştırmak
-
-### Backend Testleri
-
+### Backend Tests
 ```bash
 cd briefing/backend
-source venv/bin/activate      # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-pytest                         # tüm testler
-pytest -v                      # detaylı çıktı
-pytest tests/test_upload.py    # belirli dosya
-pytest -k "test_analyze"       # isme göre filtrele
+source venv/bin/activate
+pytest
 ```
+Tests cover health checks, file uploads, analysis logic (using mocks), and history management.
 
-**17 test, 4 dosya:**
-
-| Dosya | Test Sayısı | Kapsam |
-|-------|------------|--------|
-| test_health.py | 1 | Sağlık kontrolü |
-| test_upload.py | 4 | TXT yükleme, desteklenmeyen uzantı, büyük dosya, UTF-8 olmayan encoding |
-| test_analyze.py | 4 | Başarılı analiz (mock LLM), eksik API anahtarı, bilinmeyen sağlayıcı, geçmişe kaydetme |
-| test_history.py | 8 | Listeleme, ID ile getirme, geçersiz UUID, 404, silme, arama, etiket güncelleme, tamamlanan maddeler |
-
-LLM çağrıları mock'lanır — gerçek API çağrısı yapılmaz, anahtara gerek yoktur.
-
-### Frontend Tip Kontrolü
-
+### Frontend Type Check
 ```bash
 cd briefing/frontend
-npx tsc --noEmit    # tip kontrolü
-npm run build       # tam derleme
+npx tsc --noEmit
 ```
 
 ---
 
 ## CI / CD
 
-`.github/workflows/ci.yml` her push ve pull request'te çalışır.
+The CI pipeline runs on every push and pull request via GitHub Actions.
 
-### İş Akışı
-
-```
-secret-scan → backend → frontend
-```
-
-**secret-scan:** Git'e eklenen `.env`, `.pem`, `.key`, `.db` gibi dosyaları tespit eder ve pipeline'ı durdurur.
-
-**backend:**
-1. Python 3.12 kurulumu
-2. `ruff check .` — kod kalitesi (E, F, W, I, UP, B, BLE, ARG, SIM kuralları)
-3. `pip-audit` — bilinen CVE taraması
-4. `pytest` — 17 test
-
-**frontend:**
-1. Node 20 kurulumu
-2. `npm ci` — reproducible kurulum
-3. `npx tsc --noEmit` — TypeScript strict tip kontrolü
-4. `npm run build` — tam üretim derlemesi
+- **Secret Scan:** Detects sensitive files like .env or .db
+- **Backend:** Code quality checks (ruff), security scans (pip-audit), and tests
+- **Frontend:** Type checking and production build verification
 
 ---
 
-## Docker — Üretim Ortamı
+## Project Structure
 
-### Ortam Değişkenleri
-
-`docker-compose.yml` yanında `.env` dosyası oluşturun:
-
-```env
-OLLAMA_BASE_URL=http://host.docker.internal:11434
-CORS_ORIGINS=https://alanadi.com
-VITE_API_URL=https://api.alanadi.com
-MAX_FILE_SIZE_MB=25
-```
-
-```bash
-docker compose --env-file .env up --build -d
-```
-
-### Veritabanı Yönetimi
-
-```bash
-# Yedek alma
-docker compose cp backend:/app/data/meetings.db ./yedek.db
-
-# Yedekten geri yükleme
-docker compose cp ./yedek.db backend:/app/data/meetings.db
-docker compose restart backend
-
-# Güncelleme
-git pull && docker compose up --build -d
-```
+- **backend/:** FastAPI server, database management, and AI service adapters
+- **frontend/:** React application, UI components, and state management
+- **docker-compose.yml:** Configuration for full environment setup
 
 ---
 
-## Proje Yapısı
+## Technical Stack
 
-```
-briefing/
-├── .github/workflows/ci.yml        # CI pipeline
-├── backend/
-│   ├── routers/
-│   │   ├── analyze.py              # POST /api/analyze
-│   │   ├── history.py              # Geçmiş CRUD + arama
-│   │   ├── settings.py             # Modeller, test, webhook
-│   │   └── upload.py               # Dosya yükleme
-│   ├── services/
-│   │   ├── extractor.py            # PDF/DOCX/TXT metin çıkarma
-│   │   ├── llm.py                  # Ollama/OpenAI/Anthropic bağdaştırıcıları
-│   │   ├── parser.py               # Prompt oluşturma + LLM yanıt ayrıştırma
-│   │   └── webhook.py              # Asenkron webhook gönderimi
-│   ├── tests/                      # 17 pytest testi
-│   ├── .env.example                # Tüm ayar şablonu
-│   ├── config.py                   # Pydantic Settings
-│   ├── database.py                 # Bağlantı yönetimi + şema migrasyonları
-│   ├── Dockerfile
-│   ├── main.py                     # FastAPI uygulaması
-│   ├── models.py                   # Pydantic modelleri
-│   ├── pytest.ini
-│   ├── requirements.txt
-│   └── ruff.toml                   # Linter ayarları
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── analysis/
-│   │   │   │   ├── ActionItems.tsx      # Kalıcı aksiyon listesi
-│   │   │   │   ├── AnalysisResult.tsx   # Sonuç konteyneri + dışa aktarma
-│   │   │   │   ├── ParticipantModal.tsx # Kişi başına toplantı geçmişi
-│   │   │   │   ├── Participants.tsx     # Katılımcılar, konular, kararlar
-│   │   │   │   ├── Summary.tsx          # Özet + duygu + istatistikler
-│   │   │   │   └── TagEditor.tsx        # Satır içi etiket düzenleyici
-│   │   │   ├── layout/
-│   │   │   │   ├── MainLayout.tsx
-│   │   │   │   └── Sidebar.tsx          # Geçmiş, arama, etiket filtresi
-│   │   │   ├── settings/
-│   │   │   │   └── SettingsPanel.tsx    # Sağlayıcı, model, webhook
-│   │   │   ├── upload/
-│   │   │   │   ├── BatchUpload.tsx      # Toplu dosya kuyruğu
-│   │   │   │   ├── ModelSelector.tsx    # Model açılır listesi
-│   │   │   │   └── UploadZone.tsx       # Dosya/metin/toplu sekmeler
-│   │   │   └── ErrorBoundary.tsx        # Hata sınırı
-│   │   ├── hooks/
-│   │   │   ├── useAnalysis.ts           # Mutation + abort controller
-│   │   │   ├── useCopy.ts               # Pano kopyalama (HTTP fallback)
-│   │   │   └── useHistory.ts            # Sayfalı geçmiş + silme
-│   │   ├── lib/
-│   │   │   ├── api.ts                   # Tüm API fonksiyonları
-│   │   │   └── utils.ts                 # Tarih formatı, dışa aktarma
-│   │   ├── store/settingsStore.ts       # Zustand + sessionStorage
-│   │   ├── types/index.ts               # TypeScript arayüzleri
-│   │   ├── App.tsx                      # Kök bileşen
-│   │   ├── main.tsx                     # React giriş noktası
-│   │   └── vite-env.d.ts               # Vite ortam tipi tanımları
-│   ├── .env.example
-│   ├── Dockerfile                       # Çok aşamalı: Node derle → nginx sun
-│   ├── nginx.conf                       # SPA fallback + gzip + güvenlik başlıkları
-│   ├── package.json
-│   ├── tsconfig.json                    # Strict TypeScript yapılandırması
-│   └── vite.config.ts
-├── docker-compose.yml                   # Tek komutla tam kurulum
-├── .gitignore                           # Kapsamlı gizli dosya dışlama listesi
-└── README.md
-```
+- **Backend:** FastAPI, SQLite (aiosqlite), Pydantic, httpx
+- **Frontend:** React, TypeScript, Vite, TanStack Query, Zustand, Tailwind CSS
+- **AI Integration:** Ollama, OpenAI SDK, Anthropic SDK
 
 ---
 
-## Teknik Yığın
+## Troubleshooting
 
-### Backend
-| Kütüphane | Sürüm | Amaç |
-|-----------|-------|------|
-| FastAPI | 0.136 | ASGI web çerçevesi |
-| aiosqlite | 0.20 | Asenkron SQLite sürücüsü |
-| Pydantic v2 | 2.9 | İstek/yanıt doğrulama |
-| pydantic-settings | 2.6 | `.env` yapılandırma yükleme |
-| pypdf | 6.12 | PDF metin çıkarma |
-| python-docx | 1.2 | DOCX metin çıkarma |
-| httpx | 0.27 | HTTP istemcisi |
-| openai | 1.54 | OpenAI SDK |
-| anthropic | 0.37 | Anthropic SDK |
-| slowapi | 0.1.9 | Rate limiting |
-| uvicorn | 0.30 | ASGI sunucusu |
+### Could not connect to Ollama
+Ensure Ollama is running and accessible at http://localhost:11434. In Docker, use host.docker.internal to reach the host machine.
 
-### Frontend
-| Kütüphane | Sürüm | Amaç |
-|-----------|-------|------|
-| React | 18 | UI çerçevesi |
-| TypeScript | 5.7 | Tip güvenliği (strict mod) |
-| Vite | 6 | Derleme aracı ve dev sunucu |
-| TanStack Query | 5 | Sunucu durumu, önbellek, mutasyon |
-| Zustand | 5 | İstemci ayarları durumu |
-| Tailwind CSS | 3.4 | Yardımcı sınıf tabanlı stil |
-| Axios | 1.7 | HTTP istemcisi |
-| Sonner | 1.7 | Toast bildirimleri |
-| Lucide React | 0.468 | İkon kütüphanesi |
+### Invalid API Key
+Check for extra spaces and ensure the key belongs to the correct provider. Remember that keys are cleared when the tab is closed.
+
+### 413 Error (File Too Large)
+Increase the MAX_FILE_SIZE_MB variable in your backend .env file and restart the server.
 
 ---
 
-## Sorun Giderme
+## Security
 
-### "Could not connect to Ollama" (Ollama'ya bağlanılamıyor)
-
-**Kontrol 1:** Ollama çalışıyor mu?
-- macOS/Windows: Menü çubuğunda/sistem tepsisinde lama simgesi var mı?
-- Linux: `systemctl status ollama` veya `ollama serve` çalıştırın
-
-**Kontrol 2:** Yanıt veriyor mu?
-```bash
-curl http://localhost:11434/api/tags
-```
-JSON dönmeli. Hata alıyorsanız Ollama başlatılmamıştır.
-
-**Docker'da Ollama Kullanmak:**
-Docker içindeki backend, host makinedeki Ollama'ya `host.docker.internal` adresiyle erişir. Linux'ta bu otomatik değildir — `docker-compose.yml` içindeki `extra_hosts` satırı bunu sağlar.
+- API keys are stored only in the browser session
+- Protection against SSRF and SQL Injection
+- Rate limiting for file uploads and analysis
+- Automatic security scanning in the CI pipeline
 
 ---
 
-### "API key is invalid or quota is exhausted" (Geçersiz API anahtarı)
+## Contributing
 
-- Anahtarın başında veya sonunda boşluk olup olmadığını kontrol edin
-- Anahtarın doğru sağlayıcıya ait olduğundan emin olun (OpenAI anahtarı `sk-` ile başlar, Anthropic anahtarı `sk-ant-` ile)
-- Hesabınızda yeterli kredi/kota var mı kontrol edin
-- **Önemli:** API anahtarları sekme kapanınca silinir. Tarayıcıyı veya sekmeyi kapattıysanız anahtarı yeniden girmeniz gerekir.
-
----
-
-### Analiz boş veya anlamsız sonuç döndürüyor
-
-- Daha büyük bir model deneyin (`llama3.1` yerine `llama3.1:13b`)
-- Transkriptin İngilizce veya modelin desteklediği bir dilde olduğundan emin olun
-- OpenAI veya Anthropic ile karşılaştırmayı deneyin
+1. Fork the repository
+2. Create a feature branch
+3. Run local CI checks (tests, linting, type checks)
+4. Submit a Pull Request
 
 ---
 
-### Arayüzde "Something went wrong" (Bir şeyler yanlış gitti)
+## License
 
-1. F12 → Console sekmesini açın → hata mesajını okuyun
-2. Sayfayı yenileyin (F5)
-3. "Try again" butonuna tıklayın
-4. Sorun devam ederse bir bug raporu açın, console çıktısını ekleyin
+Internal Project - All Rights Reserved.
 
----
-
-### 413 Hatası (Dosya çok büyük)
-
-`backend/.env` dosyasını düzenleyin:
-```
-MAX_FILE_SIZE_MB=100
-```
-Backend'i yeniden başlatın.
-
----
-
-### Port zaten kullanımda hatası
-
-```bash
-# macOS / Linux
-lsof -i :8000      # 8000 portunu kim kullanıyor?
-kill -9 <PID>      # o süreci sonlandır
-
-# Windows
-netstat -ano | findstr :8000
-taskkill /PID <PID> /F
-```
-
-Frontend için aynısını port 5173 ile yapın.
-
----
-
-### Arama sonuç döndürmüyor
-
-FTS5 indeksi sunucu başlangıcında yenilenir. Eski bir sürümden geçiş yaptıysanız:
-- Backend'i yeniden başlatın — bu yeterlidir
-- FTS5 prefix eşleme kullanır: `top` → "toplantı" bulur, `lantı` → bulmaz
-
----
-
-### Windows'ta `python` komutu bulunamıyor
-
-Python kurulurken "Add Python to PATH" işaretlenmemiş demektir. Çözüm:
-1. "Python 3.12" arayın → Modify → "Add Python to environment variables" kutucuğunu işaretleyin
-2. Veya Python'u kaldırıp yeniden yükleyin, bu sefer kutucuğu işaretleyin
-3. Yeni bir cmd penceresi açın
-
----
-
-### `npm install` hata veriyor (Windows)
-
-"node-gyp" hatası alıyorsanız Visual Studio Build Tools gerekir:
-```
-npm install --global windows-build-tools
-```
-Veya Node.js kurulurken "Automatically install necessary tools" seçeneğini işaretleyin.
-
----
-
-## Güvenlik
-
-| Alan | Uygulanan Koruma |
-|------|----------------|
-| **API Anahtarları** | Yalnızca `sessionStorage`'da tutulur (sekme kapanınca silinir), hiçbir sunucuya gönderilmez |
-| **SSRF** | Ollama URL yalnızca localhost'a izin verir; webhook URL'si özel ağları ve metadata endpoint'lerini engeller |
-| **Dosya Yükleme** | Boyut RAM'e yüklenmeden önce kontrol edilir; uzantı whitelist ile kısıtlanır |
-| **SQL Injection** | Tüm veritabanı sorguları parametreli; hiçbir yerde SQL string birleştirme kullanılmaz |
-| **Prompt Injection** | Transkript ile sistem talimatları sert bir ayırıcıyla ayrılır; transkript 80.000 karakterle sınırlandırılır |
-| **Rate Limiting** | IP bazlı: Analiz 10 istek/dk, yükleme 20 istek/dk |
-| **Body Boyutu** | Middleware JSON body'leri 10 MB ile sınırlar |
-| **CORS** | Yalnızca yapılandırılan `CORS_ORIGINS` adreslerine izin verilir |
-| **UUID Doğrulama** | History endpoint path parametreleri UUID tipinde; geçersiz değerler veritabanına ulaşmadan 422 döner |
-| **CVE Taraması** | `pip-audit` her push'ta çalışır, bilinen güvenlik açığı tespit ederse pipeline durur |
-| **Gizli Tarama** | CI, `.env`, özel anahtar veya veritabanı dosyalarının commit edilmesini engeller |
-| **Bağımlılık Güncelliği** | `fastapi==0.136`, `python-dotenv==1.2.2`, `starlette==1.x` — tüm bilinen CVE'ler giderildi |
-
----
-
-## Katkıda Bulunmak
-
-1. Repoyu fork edin ve bir özellik branch'i oluşturun:
-   ```bash
-   git checkout -b feat/yeni-ozellik
-   ```
-
-2. Değişikliklerinizi yapın. Commit mesajları açıklayıcı olsun.
-
-3. Push etmeden önce CI kontrollerini yerelde çalıştırın:
-   ```bash
-   # Backend
-   cd backend
-   ruff check .
-   pip-audit -r requirements.txt
-   pytest
-
-   # Frontend
-   cd ../frontend
-   npx tsc --noEmit
-   npm run build
-   ```
-
-4. Pull Request açın — ne değiştirdiğinizi ve neden değiştirdiğinizi açıklayın.
-
----
-
-## Lisans
-
-Dahili Proje — Tüm Hakları Saklıdır.
-
-Bu yazılımın hiçbir parçası, yazarın açık yazılı izni olmaksızın çoğaltılamaz, dağıtılamaz veya kullanılamaz.
+No part of this software may be reproduced, distributed, or used without explicit written permission from the author.
