@@ -14,7 +14,7 @@ class Settings(BaseSettings):
         url = self.database_url
         if url.startswith("sqlite"):
             path = url.split("///", 1)[-1]
-            return path.lstrip("./") if path.startswith("./") else path
+            return path.removeprefix("./")
         return "meetings.db"
 
     class Config:
