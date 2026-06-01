@@ -7,12 +7,6 @@ from config import settings
 DB_PATH = settings.db_path
 
 
-async def get_db() -> aiosqlite.Connection:
-    db = await aiosqlite.connect(DB_PATH)
-    db.row_factory = aiosqlite.Row
-    return db
-
-
 @asynccontextmanager
 async def db_connection() -> AsyncGenerator[aiosqlite.Connection, None]:
     db = await aiosqlite.connect(DB_PATH)
