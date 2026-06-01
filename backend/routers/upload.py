@@ -14,14 +14,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 @router.post("/upload", response_model=UploadResponse)
 @limiter.limit("20/minute")
-async def upload_file(request: Request, file: UploadFile = File(...)) -> UploadResponse:
-    content_length = request.headers.get("content-length")
-    if content_length and int(content_length) > MAX_FILE_SIZE_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail=f"File exceeds the {settings.max_file_size_mb}MB limit.",
-        )
-
+async def upload_file(request: Request, file: UploadFile = File(...)) -> UploadResponse:  # noqa: ARG001
     filename = file.filename or "unknown"
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 

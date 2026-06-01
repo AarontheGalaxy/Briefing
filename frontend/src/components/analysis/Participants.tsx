@@ -40,7 +40,7 @@ export const Participants: React.FC<ParticipantsProps> = ({
           </div>
           <div className="space-y-1.5">
             {keyDecisions.map((decision, i) => (
-              <div key={i} className="border-l-2 border-zinc-700 pl-3">
+              <div key={i + "-" + decision.slice(0, 20)} className="border-l-2 border-zinc-700 pl-3">
                 <p className="text-sm text-zinc-300">{decision}</p>
               </div>
             ))}

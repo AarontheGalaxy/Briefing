@@ -1,7 +1,9 @@
 import json
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Path, Query, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from database import db_connection
 from models import (
@@ -13,6 +15,7 @@ from models import (
 )
 
 router = APIRouter(prefix="/api", tags=["history"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 def _row_to_analysis(row: dict) -> AnalysisResponse:
@@ -164,8 +167,10 @@ async def update_completed_items(
 
 
 @router.get("/participants/{name}/analyses", response_model=HistoryListResponse)
+@limiter.limit("20/minute")
 async def get_participant_analyses(
-    name: str,
+    request: Request,  # noqa: ARG001
+    name: str = Path(..., max_length=200),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
 ) -> HistoryListResponse:

@@ -43,7 +43,7 @@ export function usePaginatedHistory(search = "", tag = "") {
   });
 
   useEffect(() => {
-    if (!data) return;
+    if (!data || data.page !== page) return;
     setTotal(data.total);
     setAllItems((prev) => (page === 1 ? data.items : [...prev, ...data.items]));
   }, [data, page]);

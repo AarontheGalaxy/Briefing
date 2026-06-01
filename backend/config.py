@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./meetings.db"
     max_file_size_mb: int = 50
     cors_origins: str = "http://localhost:5173"
+    api_auth_token: str | None = None
 
     @property
     def cors_origins_list(self) -> list[str]:

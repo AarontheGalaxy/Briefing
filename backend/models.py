@@ -27,6 +27,16 @@ class AnalyzeRequest(BaseModel):
     def text_must_not_be_blank(cls, v: str) -> str:
         if not v.strip():
             raise ValueError("text must not be empty or whitespace")
+        if len(v) > 200_000:
+            raise ValueError("text is too long (max 200,000 chars)")
+        return v
+
+    @field_validator("model")
+    @classmethod
+    def validate_model_name(cls, v: str) -> str:
+        import re
+        if not re.match(r"^[a-zA-Z0-9._:/-]{1,200}$", v) or ".." in v or v.startswith("/"):
+            raise ValueError("Invalid model name")
         return v
 
     @field_validator("meeting_type")
@@ -59,6 +69,15 @@ class AnalysisResponse(BaseModel):
 
 class UpdateCompletedItemsRequest(BaseModel):
     completed: list[int]
+
+    @field_validator("completed")
+    @classmethod
+    def validate_completed(cls, v: list[int]) -> list[int]:
+        if len(v) > 200:
+            raise ValueError("Too many completed items")
+        if any(i < 0 for i in v):
+            raise ValueError("Indices must be non-negative")
+        return v
 
 
 class UpdateTagsRequest(BaseModel):

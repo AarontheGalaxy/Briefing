@@ -5,21 +5,22 @@ import aiosqlite
 
 from config import settings
 
-DB_PATH = settings.db_path
-
 
 @asynccontextmanager
 async def db_connection() -> AsyncGenerator[aiosqlite.Connection, None]:
-    db = await aiosqlite.connect(DB_PATH)
+    db = await aiosqlite.connect(settings.db_path)
     db.row_factory = aiosqlite.Row
     try:
         yield db
+    except Exception:
+        await db.rollback()
+        raise
     finally:
         await db.close()
 
 
 async def init_db() -> None:
-    async with aiosqlite.connect(DB_PATH) as db:
+    async with aiosqlite.connect(settings.db_path) as db:
         await db.execute("""
             CREATE TABLE IF NOT EXISTS analyses (
                 id TEXT PRIMARY KEY,

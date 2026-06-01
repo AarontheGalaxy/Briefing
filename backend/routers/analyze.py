@@ -23,6 +23,8 @@ router = APIRouter(prefix="/api", tags=["analyze"])
 limiter = Limiter(key_func=get_remote_address)
 
 
+_background_tasks: set = set()
+
 @router.post("/analyze", response_model=AnalysisResponse)
 @limiter.limit("10/minute")
 async def analyze(request: Request, body: AnalyzeRequest) -> AnalysisResponse:  # noqa: ARG001
@@ -47,19 +49,22 @@ async def analyze(request: Request, body: AnalyzeRequest) -> AnalysisResponse:  
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
-        error_msg = str(exc)
-        safe_msg = error_msg if "sk-" not in error_msg else "[redacted]"
-        logger.error("LLM analysis failed: %s", safe_msg)
+        error_msg = str(exc).lower()
         auth_err = (
-            "api_key" in error_msg.lower()
-            or "authentication" in error_msg.lower()
-            or "invalid_api_key" in error_msg.lower()
+            "api_key" in error_msg
+            or "authentication" in error_msg
+            or "invalid_api_key" in error_msg
+            or "401" in error_msg
+            or "403" in error_msg
         )
         if auth_err:
+            logger.error("LLM analysis failed: Authentication error (redacted)")
             raise HTTPException(
                 status_code=401,
                 detail="API key is invalid or quota is exhausted.",
             ) from exc
+
+        logger.error("LLM analysis failed with unexpected error.")
         raise HTTPException(
             status_code=500,
             detail="LLM call failed. Check provider is running and API key is valid.",
@@ -140,6 +145,8 @@ async def analyze(request: Request, body: AnalyzeRequest) -> AnalysisResponse:  
     )
 
     # Fire webhook in the background — never blocks the response
-    asyncio.create_task(fire_webhook(response.model_dump()))
+    task = asyncio.create_task(fire_webhook(response.model_dump()))
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
 
     return response

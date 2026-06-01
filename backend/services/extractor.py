@@ -1,3 +1,4 @@
+import asyncio
 import io
 
 from config import settings
@@ -10,11 +11,18 @@ async def extract_text(file_content: bytes, filename: str) -> tuple[str, int]:
         raise ValueError(f"File exceeds the {settings.max_file_size_mb}MB limit.")
 
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    loop = asyncio.get_running_loop()
 
     if ext == "pdf":
-        text = _extract_pdf(file_content)
+        try:
+            text = await asyncio.wait_for(loop.run_in_executor(None, _extract_pdf, file_content), timeout=30.0)
+        except TimeoutError:
+            raise ValueError("Processing PDF timed out.") from None
     elif ext == "docx":
-        text = _extract_docx(file_content)
+        try:
+            text = await asyncio.wait_for(loop.run_in_executor(None, _extract_docx, file_content), timeout=30.0)
+        except TimeoutError:
+            raise ValueError("Processing DOCX timed out.") from None
     elif ext in ("txt", "md"):
         try:
             text = file_content.decode("utf-8").strip()

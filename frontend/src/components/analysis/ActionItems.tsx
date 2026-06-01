@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Copy, Check } from "lucide-react";
 import { useCopy } from "@/hooks/useCopy";
 import { updateCompletedItems } from "@/lib/api";
@@ -16,6 +16,15 @@ const PRIORITY_DOT: Record<string, string> = {
   low: "bg-zinc-600",
 };
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
+}
+
 export const ActionItems: React.FC<ActionItemsProps> = ({
   items,
   analysisId,
@@ -28,10 +37,15 @@ export const ActionItems: React.FC<ActionItemsProps> = ({
     setChecked((prev) => {
       const next = new Set(prev);
       next.has(i) ? next.delete(i) : next.add(i);
-      updateCompletedItems(analysisId, Array.from(next)).catch(() => {});
       return next;
     });
-  }, [analysisId]);
+  }, []);
+
+  const debouncedChecked = useDebounce(checked, 500);
+
+  useEffect(() => {
+    updateCompletedItems(analysisId, Array.from(debouncedChecked)).catch(() => {});
+  }, [debouncedChecked, analysisId]);
 
   const copyText = items
     .map((item, i) => {
@@ -71,7 +85,7 @@ export const ActionItems: React.FC<ActionItemsProps> = ({
       <div className="space-y-1">
         {items.map((item, i) => (
           <div
-            key={i}
+            key={i + "-" + item.task}
             className={`flex items-start gap-3 p-2 rounded transition-colors ${
               checked.has(i) ? "opacity-40" : ""
             }`}

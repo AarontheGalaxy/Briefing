@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { Analysis } from "@/types";
+import { toast } from "sonner";
 
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
@@ -82,6 +83,11 @@ export function downloadFile(content: string, filename: string, mime: string) {
   URL.revokeObjectURL(url);
 }
 
+function esc(s: string): string {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
 export function printAnalysis(a: Analysis): void {
   const title = a.file_name ?? "Meeting Analysis";
   const date = formatDate(a.created_at);
@@ -90,20 +96,20 @@ export function printAnalysis(a: Analysis): void {
     ? `<ul>${a.action_items
         .map(
           (item) =>
-            `<li><strong>[${item.priority}]</strong> ${item.task}${item.assignee ? ` — <em>${item.assignee}</em>` : ""}${item.due_date ? ` (${item.due_date})` : ""}</li>`
+            `<li><strong>[${esc(item.priority)}]</strong> ${esc(item.task)}${item.assignee ? ` — <em>${esc(item.assignee)}</em>` : ""}${item.due_date ? ` (${esc(item.due_date)})` : ""}</li>`
         )
         .join("")}</ul>`
     : "<p><em>No action items.</em></p>";
 
   const decisionsHtml = a.key_decisions.length
-    ? `<ol>${a.key_decisions.map((d) => `<li>${d}</li>`).join("")}</ol>`
+    ? `<ol>${a.key_decisions.map((d) => `<li>${esc(d)}</li>`).join("")}</ol>`
     : "<p><em>None.</em></p>";
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>${title}</title>
+  <title>${esc(title)}</title>
   <style>
     body { font-family: Georgia, serif; max-width: 720px; margin: 40px auto; color: #111; font-size: 14px; line-height: 1.6; }
     h1 { font-size: 22px; margin-bottom: 4px; }
@@ -116,25 +122,28 @@ export function printAnalysis(a: Analysis): void {
   </style>
 </head>
 <body>
-  <h1>${title}</h1>
-  <div class="meta">${date} · ${a.sentiment} · ${a.word_count.toLocaleString()} words${a.provider ? ` · ${a.provider}/${a.model}` : ""}</div>
-  ${a.tags && a.tags.length ? `<div class="tags">${a.tags.map((t) => `<span>#${t}</span>`).join("")}</div><br/>` : ""}
+  <h1>${esc(title)}</h1>
+  <div class="meta">${esc(date)} · ${esc(a.sentiment)} · ${a.word_count.toLocaleString()} words${a.provider ? ` · ${esc(a.provider)}/${esc(a.model!)}` : ""}</div>
+  ${a.tags && a.tags.length ? `<div class="tags">${a.tags.map((t) => `<span>#${esc(t)}</span>`).join("")}</div><br/>` : ""}
   <h2>Summary</h2>
-  <p>${a.summary}</p>
+  <p>${esc(a.summary)}</p>
   <h2>Key Decisions</h2>
   ${decisionsHtml}
   <h2>Action Items</h2>
   ${actionItemsHtml}
   <h2>Participants</h2>
-  <p>${a.participants.join(", ") || "—"}</p>
+  <p>${a.participants.length ? a.participants.map(p => esc(p)).join(", ") : "—"}</p>
   <h2>Topics Discussed</h2>
-  <p>${a.topics_discussed.join(", ") || "—"}</p>
-  ${a.next_meeting ? `<h2>Next Meeting</h2><p>${a.next_meeting}</p>` : ""}
+  <p>${a.topics_discussed.length ? a.topics_discussed.map(t => esc(t)).join(", ") : "—"}</p>
+  ${a.next_meeting ? `<h2>Next Meeting</h2><p>${esc(a.next_meeting)}</p>` : ""}
 </body>
 </html>`;
 
   const win = window.open("", "_blank");
-  if (!win) return;
+  if (!win) {
+    toast.error("Popup blocked. Allow popups for this site to print.");
+    return;
+  }
   win.document.write(html);
   win.document.close();
   win.focus();

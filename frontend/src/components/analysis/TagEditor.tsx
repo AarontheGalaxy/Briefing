@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { X, Tag } from "lucide-react";
 import { updateTags } from "@/lib/api";
 
@@ -11,20 +11,26 @@ export const TagEditor: React.FC<TagEditorProps> = ({ analysisId, initialTags })
   const [tags, setTags] = useState<string[]>(initialTags);
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => { isMounted.current = false; };
+  }, []);
 
   const persist = async (next: string[]) => {
-    setTags(next);
+    if (isMounted.current) setTags(next);
     await updateTags(analysisId, next).catch(() => {});
   };
 
   const addTag = (value = input) => {
+    if (!isMounted.current) return;
     const val = value.trim().toLowerCase().slice(0, 32);
     if (!val || tags.includes(val) || tags.length >= 20) {
-      setInput("");
+      if (isMounted.current) setInput("");
       return;
     }
     persist([...tags, val]);
-    setInput("");
+    if (isMounted.current) setInput("");
   };
 
   const removeTag = (tag: string) => persist(tags.filter((t) => t !== tag));
@@ -39,10 +45,11 @@ export const TagEditor: React.FC<TagEditorProps> = ({ analysisId, initialTags })
     }
   };
 
-  // onBlur fires before onClick on tag remove buttons — use setTimeout to let
-  // click handlers run first before attempting to add the current input as tag
-  const handleBlur = () => {
-    setTimeout(() => addTag(), 100);
+  const handleBlur = (e: React.FocusEvent) => {
+    // Only add tag if clicking outside this component entirely
+    if (!e.currentTarget.parentElement?.contains(e.relatedTarget as Node)) {
+      setTimeout(() => { if (isMounted.current) addTag(); }, 100);
+    }
   };
 
   return (

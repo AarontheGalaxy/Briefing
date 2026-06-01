@@ -1,7 +1,7 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -19,6 +19,11 @@ limiter = Limiter(key_func=get_remote_address)
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     await init_db()
     yield
+
+
+async def verify_auth_token(x_api_key: str | None = Header(None)) -> None:
+    if app_settings.api_auth_token and (not x_api_key or x_api_key != app_settings.api_auth_token):
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
 
 _MAX_BODY_BYTES = 10 * 1024 * 1024  # 10 MB max for JSON bodies (text already limited in parser)
@@ -40,13 +45,13 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=app_settings.cors_origins_list,
     allow_methods=["GET", "POST", "DELETE", "PATCH", "PUT"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "X-API-Key"],
 )
 
-app.include_router(upload.router)
-app.include_router(analyze.router)
-app.include_router(history.router)
-app.include_router(settings.router)
+app.include_router(upload.router, dependencies=[Depends(verify_auth_token)])
+app.include_router(analyze.router, dependencies=[Depends(verify_auth_token)])
+app.include_router(history.router, dependencies=[Depends(verify_auth_token)])
+app.include_router(settings.router, dependencies=[Depends(verify_auth_token)])
 
 
 @app.get("/health")
