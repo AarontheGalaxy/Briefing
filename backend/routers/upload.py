@@ -1,6 +1,7 @@
 from fastapi import APIRouter, File, Request, UploadFile, HTTPException
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from config import settings
 from models import UploadResponse
 from services.extractor import extract_text, MAX_FILE_SIZE_BYTES
 
@@ -15,7 +16,7 @@ limiter = Limiter(key_func=get_remote_address)
 async def upload_file(request: Request, file: UploadFile = File(...)) -> UploadResponse:
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > MAX_FILE_SIZE_BYTES:
-        raise HTTPException(status_code=413, detail="File exceeds the 50MB limit.")
+        raise HTTPException(status_code=413, detail=f"File exceeds the {settings.max_file_size_mb}MB limit.")
 
     filename = file.filename or "unknown"
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
@@ -26,7 +27,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)) -> UploadR
     # Read with a hard cap: one byte over the limit means we reject immediately
     content = await file.read(MAX_FILE_SIZE_BYTES + 1)
     if len(content) > MAX_FILE_SIZE_BYTES:
-        raise HTTPException(status_code=413, detail="File exceeds the 50MB limit.")
+        raise HTTPException(status_code=413, detail=f"File exceeds the {settings.max_file_size_mb}MB limit.")
 
     try:
         text, word_count = await extract_text(content, filename)
