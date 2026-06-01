@@ -1,7 +1,6 @@
-from typing import Optional
 import urllib.parse
-import httpx
 
+import httpx
 
 OLLAMA_TIMEOUT = 120.0
 TEST_PROMPT = "Reply with only the word: OK"
@@ -14,8 +13,8 @@ def validate_ollama_url(url: str) -> str:
     """Validate that an Ollama URL points to a local host only."""
     try:
         parsed = urllib.parse.urlparse(url)
-    except Exception:
-        raise ValueError("Invalid URL format.")
+    except Exception as exc:  # noqa: BLE001
+        raise ValueError("Invalid URL format.") from exc
 
     if parsed.scheme not in _ALLOWED_OLLAMA_SCHEMES:
         raise ValueError(f"URL scheme must be http or https, got: {parsed.scheme!r}")
@@ -67,7 +66,7 @@ async def call_llm(
     prompt: str,
     provider: str,
     model: str,
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
     ollama_url: str = "http://localhost:11434",
 ) -> str:
     if provider == "ollama":
@@ -87,7 +86,7 @@ async def call_llm(
 async def test_connection(
     provider: str,
     model: str,
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
     ollama_url: str = "http://localhost:11434",
 ) -> bool:
     result = await call_llm(TEST_PROMPT, provider, model, api_key, ollama_url)

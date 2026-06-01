@@ -91,7 +91,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ open, onClose }) =
       <div className="relative ml-auto w-80 h-full bg-zinc-900 border-l border-zinc-800 flex flex-col shadow-xl">
         <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-800">
           <span className="text-sm font-medium text-zinc-100">Settings</span>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors">
+          <button onClick={onClose} aria-label="Close settings" className="text-zinc-500 hover:text-zinc-300 transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>

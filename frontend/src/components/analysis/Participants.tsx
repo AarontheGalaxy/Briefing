@@ -32,6 +32,7 @@ export const Participants: React.FC<ParticipantsProps> = ({
             <button
               onClick={() => copy(keyDecisions.map((d, i) => `${i + 1}. ${d}`).join("\n"))}
               className="text-zinc-600 hover:text-zinc-300 transition-colors"
+              aria-label="Copy key decisions"
               title="Copy key decisions"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}

@@ -1,12 +1,11 @@
 import io
-from typing import Tuple
 
 from config import settings
 
 MAX_FILE_SIZE_BYTES = settings.max_file_size_mb * 1024 * 1024
 
 
-async def extract_text(file_content: bytes, filename: str) -> Tuple[str, int]:
+async def extract_text(file_content: bytes, filename: str) -> tuple[str, int]:
     if len(file_content) > MAX_FILE_SIZE_BYTES:
         raise ValueError(f"File exceeds the {settings.max_file_size_mb}MB limit.")
 

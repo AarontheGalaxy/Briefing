@@ -62,6 +62,7 @@ export const ActionItems: React.FC<ActionItemsProps> = ({
         <button
           onClick={() => copy(copyText)}
           className="text-zinc-600 hover:text-zinc-300 transition-colors"
+          aria-label="Copy action items"
           title="Copy action items"
         >
           {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}

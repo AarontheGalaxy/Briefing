@@ -17,9 +17,12 @@ export const TagEditor: React.FC<TagEditorProps> = ({ analysisId, initialTags })
     await updateTags(analysisId, next).catch(() => {});
   };
 
-  const addTag = () => {
-    const val = input.trim().toLowerCase().slice(0, 32);
-    if (!val || tags.includes(val) || tags.length >= 20) return;
+  const addTag = (value = input) => {
+    const val = value.trim().toLowerCase().slice(0, 32);
+    if (!val || tags.includes(val) || tags.length >= 20) {
+      setInput("");
+      return;
+    }
     persist([...tags, val]);
     setInput("");
   };
@@ -34,6 +37,12 @@ export const TagEditor: React.FC<TagEditorProps> = ({ analysisId, initialTags })
     if (e.key === "Backspace" && !input && tags.length > 0) {
       removeTag(tags[tags.length - 1]);
     }
+  };
+
+  // onBlur fires before onClick on tag remove buttons — use setTimeout to let
+  // click handlers run first before attempting to add the current input as tag
+  const handleBlur = () => {
+    setTimeout(() => addTag(), 100);
   };
 
   return (
@@ -64,7 +73,7 @@ export const TagEditor: React.FC<TagEditorProps> = ({ analysisId, initialTags })
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          onBlur={addTag}
+          onBlur={handleBlur}
           placeholder={tags.length === 0 ? "Add tags…" : ""}
           className="bg-transparent text-xs text-zinc-300 placeholder-zinc-600 outline-none min-w-16 flex-1"
           maxLength={32}

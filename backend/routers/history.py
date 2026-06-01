@@ -2,8 +2,15 @@ import json
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
+
 from database import db_connection
-from models import AnalysisResponse, ActionItem, HistoryListResponse, UpdateCompletedItemsRequest, UpdateTagsRequest
+from models import (
+    ActionItem,
+    AnalysisResponse,
+    HistoryListResponse,
+    UpdateCompletedItemsRequest,
+    UpdateTagsRequest,
+)
 
 router = APIRouter(prefix="/api", tags=["history"])
 

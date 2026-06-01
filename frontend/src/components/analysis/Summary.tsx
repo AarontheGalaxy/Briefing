@@ -37,6 +37,7 @@ export const Summary: React.FC<SummaryProps> = ({
           <button
             onClick={() => copy(summary)}
             className="text-zinc-600 hover:text-zinc-300 transition-colors"
+            aria-label="Copy summary"
             title="Copy summary"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}

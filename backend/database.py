@@ -1,6 +1,7 @@
-import aiosqlite
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+
+import aiosqlite
 
 from config import settings
 
@@ -39,19 +40,15 @@ async def init_db() -> None:
         """)
 
         # Additive migration — safe to run on existing databases
-        try:
+        from contextlib import suppress
+        with suppress(aiosqlite.OperationalError):
             await db.execute(
                 "ALTER TABLE analyses ADD COLUMN completed_items TEXT DEFAULT '[]'"
             )
-        except aiosqlite.OperationalError:
-            pass  # column already exists
-
-        try:
+        with suppress(aiosqlite.OperationalError):
             await db.execute(
                 "ALTER TABLE analyses ADD COLUMN tags TEXT DEFAULT '[]'"
             )
-        except aiosqlite.OperationalError:
-            pass  # column already exists
 
         # FTS5 virtual table for full-text search
         await db.execute("""

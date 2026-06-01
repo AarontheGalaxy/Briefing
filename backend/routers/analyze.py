@@ -3,21 +3,21 @@ import json
 import logging
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from fastapi import APIRouter, HTTPException, Request
 import httpx
+from fastapi import APIRouter, HTTPException, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-logger = logging.getLogger(__name__)
-
+from config import settings
 from database import db_connection
-from models import AnalysisResponse, AnalyzeRequest, ActionItem
+from models import ActionItem, AnalysisResponse, AnalyzeRequest
 from services.llm import call_llm
 from services.parser import build_prompt, parse_llm_response
 from services.webhook import fire_webhook
-from config import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["analyze"])
 limiter = Limiter(key_func=get_remote_address)
@@ -92,7 +92,7 @@ async def analyze(request: Request, body: AnalyzeRequest) -> AnalysisResponse:  
     ]
 
     analysis_id = str(uuid.uuid4())
-    created_at = datetime.now(timezone.utc).isoformat()
+    created_at = datetime.now(UTC).isoformat()
     word_count = len(body.text.split())
 
     async with db_connection() as db:
@@ -106,7 +106,7 @@ async def analyze(request: Request, body: AnalyzeRequest) -> AnalysisResponse:  
             """,
             (
                 analysis_id,
-                None,
+                body.file_name,
                 word_count,
                 parsed.get("summary", ""),
                 json.dumps(parsed.get("key_decisions", [])),

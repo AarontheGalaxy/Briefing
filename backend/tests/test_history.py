@@ -1,6 +1,7 @@
 import json
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 MOCK_LLM = json.dumps({
     "summary": "A short meeting.",

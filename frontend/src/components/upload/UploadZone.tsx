@@ -84,15 +84,22 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onAnalysisComplete }) =>
         model,
         api_key: apiKey || null,
         meeting_type: meetingType,
+        file_name: uploadedFileName ?? undefined,
       });
       onAnalysisComplete(result);
     } catch (err: unknown) {
+      if (err instanceof Error && err.name === "CanceledError") return;
       toast.error(getErrorMessage(err, "Analysis failed. Please try again."));
     }
   };
 
+  const handleCancel = () => analysisMutation.cancel();
+
   const isLoading = analysisMutation.isPending;
-  const canAnalyze = activeTab === "file" ? !!uploadedText : !!pastedText.trim();
+  const canAnalyze =
+    activeTab === "file" ? !!uploadedText :
+    activeTab === "text" ? !!pastedText.trim() :
+    false; // batch tab manages its own analyze button
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -209,6 +216,14 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onAnalysisComplete }) =>
             ))}
           </select>
         </div>
+        {isLoading && (
+          <button
+            onClick={handleCancel}
+            className="px-3 py-2 text-sm rounded font-medium transition-colors shrink-0 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700"
+          >
+            Cancel
+          </button>
+        )}
         <button
           disabled={!canAnalyze || isLoading}
           onClick={handleAnalyze}
@@ -219,7 +234,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onAnalysisComplete }) =>
               : "bg-zinc-800 text-zinc-600 cursor-not-allowed"
           )}
         >
-          {isLoading ? "Analyzing..." : "Analyze"}
+          {isLoading ? "Analyzing…" : "Analyze"}
         </button>
       </div>}
     </div>

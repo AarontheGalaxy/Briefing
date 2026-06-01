@@ -2,8 +2,14 @@ target-version = "py312"
 line-length = 100
 
 [lint]
-select = ["E", "F", "W", "I", "UP"]
-ignore = ["E501"]
+select = ["E", "F", "W", "I", "UP", "B", "BLE", "ARG", "SIM"]
+ignore = [
+    "E501",    # line too long — handled by formatter
+    "ARG002",  # unused method argument — common in FastAPI/Pydantic overrides
+    "SIM117",  # nested async with is necessary when inner depends on outer binding
+    "B008",    # FastAPI File(...)/Depends() in default args is the intended pattern
+]
 
 [lint.per-file-ignores]
 "__init__.py" = ["F401"]
+"tests/*" = ["S101", "ARG001", "E501"]  # assert OK in tests; long lines in test data are fine

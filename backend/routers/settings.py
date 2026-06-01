@@ -1,16 +1,15 @@
 import logging
-from typing import Optional
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, HttpUrl
 import httpx
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from config import settings
 from database import db_connection
-
-logger = logging.getLogger(__name__)
 from models import ModelsResponse, TestConnectionRequest, TestConnectionResponse
 from services.llm import fetch_ollama_models, test_connection
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
@@ -18,7 +17,7 @@ WEBHOOK_KEY = "webhook_url"
 
 
 class WebhookConfig(BaseModel):
-    url: Optional[str] = None
+    url: str | None = None
 
 
 @router.get("/webhook", response_model=WebhookConfig)
@@ -62,7 +61,8 @@ async def get_models(provider: str = "ollama") -> ModelsResponse:
         try:
             models = await fetch_ollama_models(settings.ollama_base_url)
             return ModelsResponse(models=models if models else ["llama3.1"])
-        except Exception:
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to fetch Ollama models: %s", exc)
             return ModelsResponse(models=["llama3.1"])
     elif provider == "openai":
         return ModelsResponse(models=OPENAI_MODELS)
@@ -86,7 +86,7 @@ async def test_provider(request: TestConnectionRequest) -> TestConnectionRespons
             return TestConnectionResponse(success=True, message="Connection successful")
         return TestConnectionResponse(success=False, message="Model returned an empty response.")
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except httpx.ConnectError:
         return TestConnectionResponse(
             success=False,

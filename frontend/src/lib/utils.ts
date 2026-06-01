@@ -9,7 +9,7 @@ export function cn(...inputs: ClassValue[]): string {
 export function formatDate(iso: string): string {
   const date = new Date(iso);
   if (isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
     year: "numeric",

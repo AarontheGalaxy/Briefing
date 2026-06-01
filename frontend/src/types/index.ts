@@ -38,6 +38,7 @@ export interface AnalyzeRequest {
   model: string;
   api_key: string | null;
   meeting_type: MeetingType;
+  file_name?: string | null;
 }
 
 export interface HistoryListResponse {

@@ -60,10 +60,15 @@ export const BatchUpload: React.FC<BatchUploadProps> = ({ meetingType }) => {
     if (valid.length < files.length) {
       toast.error("Some files were skipped (unsupported type or over 50MB).");
     }
+    const uuid = () =>
+      typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `${Math.random().toString(36).slice(2)}-${Date.now()}`;
+
     setItems((prev) => [
       ...prev,
       ...valid.map((f) => ({
-        id: crypto.randomUUID(),
+        id: uuid(),
         file: f,
         status: "pending" as ItemStatus,
       })),
@@ -160,6 +165,15 @@ export const BatchUpload: React.FC<BatchUploadProps> = ({ meetingType }) => {
               <span className="text-xs text-zinc-600 shrink-0">
                 {STATUS_LABEL[item.status]}
               </span>
+              {item.status === "error" && !running && (
+                <button
+                  onClick={() => updateItem(item.id, { status: "pending", error: undefined })}
+                  className="text-xs text-yellow-400 hover:text-yellow-200 transition-colors shrink-0"
+                  title="Retry"
+                >
+                  ↺
+                </button>
+              )}
               {(item.status === "pending" || item.status === "error") && !running && (
                 <button
                   onClick={() => removeItem(item.id)}

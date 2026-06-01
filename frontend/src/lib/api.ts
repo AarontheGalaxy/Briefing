@@ -24,8 +24,11 @@ export async function uploadFile(file: File): Promise<UploadResponse> {
   return data;
 }
 
-export async function analyzeText(request: AnalyzeRequest): Promise<Analysis> {
-  const { data } = await api.post<Analysis>("/api/analyze", request);
+export async function analyzeText(
+  request: AnalyzeRequest,
+  signal?: AbortSignal
+): Promise<Analysis> {
+  const { data } = await api.post<Analysis>("/api/analyze", request, { signal });
   return data;
 }
 

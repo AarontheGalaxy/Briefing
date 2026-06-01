@@ -59,12 +59,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       },
       duration: 5000,
     });
-  }, [selectedId, onSelectAnalysis, deleteMutation]);
+  }, [selectedId, onSelectAnalysis, deleteMutation.mutate]);
 
+  // Deduplicate: currentAnalysis goes first only if not already in historyItems
+  const historyIds = new Set(historyItems.map((i) => i.id));
   const allItems = [
-    ...(currentAnalysis && !historyItems.find((i) => i.id === currentAnalysis.id)
-      ? [currentAnalysis]
-      : []),
+    ...(currentAnalysis && !historyIds.has(currentAnalysis.id) ? [currentAnalysis] : []),
     ...historyItems,
   ];
 
