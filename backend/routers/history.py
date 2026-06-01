@@ -49,15 +49,23 @@ async def list_history(
     offset = (page - 1) * limit
     async with db_connection() as db:
         if tag:
-            tag_pattern = f'%"{tag.strip()}"%'
+            clean_tag = tag.strip()
             async with db.execute(
-                "SELECT COUNT(*) FROM analyses WHERE tags LIKE ?", (tag_pattern,)
+                """SELECT COUNT(*) FROM analyses
+                   WHERE EXISTS (
+                       SELECT 1 FROM json_each(tags) WHERE value = ?
+                   )""",
+                (clean_tag,),
             ) as cursor:
                 total_row = await cursor.fetchone()
                 total = total_row[0] if total_row else 0
             async with db.execute(
-                "SELECT * FROM analyses WHERE tags LIKE ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
-                (tag_pattern, limit, offset),
+                """SELECT * FROM analyses
+                   WHERE EXISTS (
+                       SELECT 1 FROM json_each(tags) WHERE value = ?
+                   )
+                   ORDER BY created_at DESC LIMIT ? OFFSET ?""",
+                (clean_tag, limit, offset),
             ) as cursor:
                 rows = await cursor.fetchall()
         elif search:
@@ -154,18 +162,25 @@ async def get_participant_analyses(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
 ) -> HistoryListResponse:
-    pattern = f'%"{name}"%'
     offset = (page - 1) * limit
     async with db_connection() as db:
         async with db.execute(
-            "SELECT COUNT(*) FROM analyses WHERE participants LIKE ?", (pattern,)
+            """SELECT COUNT(*) FROM analyses
+               WHERE EXISTS (
+                   SELECT 1 FROM json_each(participants) WHERE value = ?
+               )""",
+            (name,),
         ) as cursor:
             total_row = await cursor.fetchone()
             total = total_row[0] if total_row else 0
 
         async with db.execute(
-            "SELECT * FROM analyses WHERE participants LIKE ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
-            (pattern, limit, offset),
+            """SELECT * FROM analyses
+               WHERE EXISTS (
+                   SELECT 1 FROM json_each(participants) WHERE value = ?
+               )
+               ORDER BY created_at DESC LIMIT ? OFFSET ?""",
+            (name, limit, offset),
         ) as cursor:
             rows = await cursor.fetchall()
 
