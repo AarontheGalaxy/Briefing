@@ -6,10 +6,10 @@ openai==1.54.3
 pydantic==2.9.2
 pydantic-settings==2.6.0
 pydantic_core==2.23.4
-pypdf==6.12.1
+pypdf==6.13.3
 python-docx==1.2.0
 python-dotenv==1.2.2
-python-multipart==0.0.29
+python-multipart==0.0.31
 slowapi==0.1.9
 uvicorn==0.30.0
 
