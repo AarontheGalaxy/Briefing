@@ -12,6 +12,7 @@ services:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1}
       - DEFAULT_PROVIDER=${DEFAULT_PROVIDER:-ollama}
+      - ENABLE_OLLAMA=${ENABLE_OLLAMA:-true}
       - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-50}
     # Allows the backend to reach Ollama running on the host machine
     # host.docker.internal is built-in on Mac/Windows; on Linux add host-gateway

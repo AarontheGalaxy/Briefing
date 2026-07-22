@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     max_file_size_mb: int = 50
     cors_origins: str = "http://localhost:5173"
     api_auth_token: str | None = None
+    # True for local dev; set ENABLE_OLLAMA=false in prod so users must bring
+    # their own OpenAI/Anthropic key (no server compute exposure)
+    enable_ollama: bool = True
 
     @property
     def cors_origins_list(self) -> list[str]:

@@ -58,6 +58,8 @@ ANTHROPIC_MODELS = [
 @router.get("/models", response_model=ModelsResponse)
 async def get_models(provider: str = "ollama") -> ModelsResponse:
     if provider == "ollama":
+        if not settings.enable_ollama:
+            raise HTTPException(status_code=400, detail="Ollama is disabled on this server.")
         try:
             models = await fetch_ollama_models(settings.ollama_base_url)
             return ModelsResponse(models=models if models else ["llama3.1"])

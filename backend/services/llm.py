@@ -2,6 +2,8 @@ import urllib.parse
 
 import httpx
 
+from config import settings
+
 OLLAMA_TIMEOUT = 120.0
 TEST_PROMPT = "Reply with only the word: OK"
 
@@ -70,6 +72,8 @@ async def call_llm(
     ollama_url: str = "http://localhost:11434",
 ) -> str:
     if provider == "ollama":
+        if not settings.enable_ollama:
+            raise ValueError("Ollama is disabled on this server. Use OpenAI or Anthropic with your own API key.")
         return await call_ollama(prompt, model, ollama_url)
     elif provider == "openai":
         if not api_key:
