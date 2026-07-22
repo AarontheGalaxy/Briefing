@@ -6,13 +6,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
 from config import settings as app_settings
 from database import init_db
 from routers import analyze, history, settings, upload
 
-limiter = Limiter(key_func=get_remote_address)
+# ponytail: blanket IP limit for all routes; per-route decorators stay stricter.
+# In-memory per-process — switch to redis storage if we ever run multiple workers.
+limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
 
 
 @asynccontextmanager
@@ -31,6 +34,7 @@ _MAX_BODY_BYTES = 10 * 1024 * 1024  # 10 MB max for JSON bodies (text already li
 app = FastAPI(title="Briefing", version="1.0.0", lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 
 @app.middleware("http")
