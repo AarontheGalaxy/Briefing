@@ -26,11 +26,13 @@ pip-wheel-metadata/
 #  Environment variables — NEVER commit
 # ─────────────────────────────────────────
 .env
+.env.*
 .env.local
 .env.*.local
 .envrc
 *.env
 !*.env.example      # allow example files
+!.env.example
 
 # ─────────────────────────────────────────
 #  Secrets & credentials
