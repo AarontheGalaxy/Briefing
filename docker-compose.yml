@@ -13,6 +13,9 @@ services:
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1}
       - DEFAULT_PROVIDER=${DEFAULT_PROVIDER:-ollama}
       - ENABLE_OLLAMA=${ENABLE_OLLAMA:-true}
+      - CLERK_ISSUER=${CLERK_ISSUER:-}
+      # Deliberate opt-out of auth for local no-Clerk runs; never in prod
+      - ALLOW_INSECURE_NO_AUTH=${ALLOW_INSECURE_NO_AUTH:-false}
       - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-50}
     # Allows the backend to reach Ollama running on the host machine
     # host.docker.internal is built-in on Mac/Windows; on Linux add host-gateway
@@ -36,6 +39,8 @@ services:
       args:
         # Empty = same origin: nginx proxies /api to the backend container
         VITE_API_URL: ${VITE_API_URL:-}
+        # Clerk publishable key (pk_*) — empty = no-auth local mode
+        VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY:-}
     ports:
       - "5173:80"
     depends_on:

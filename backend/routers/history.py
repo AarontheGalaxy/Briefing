@@ -1,10 +1,11 @@
 import json
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Path, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from auth import current_user_id
 from database import db_connection
 from models import (
     ActionItem,
@@ -55,6 +56,7 @@ async def list_history(
     limit: int = Query(20, ge=1, le=100),
     search: str = Query("", max_length=200),
     tag: str = Query("", max_length=32),
+    user_id: str = Depends(current_user_id),
 ) -> HistoryListResponse:
     offset = (page - 1) * limit
     async with db_connection() as db:
@@ -62,20 +64,20 @@ async def list_history(
             clean_tag = tag.strip()
             async with db.execute(
                 """SELECT COUNT(*) FROM analyses
-                   WHERE EXISTS (
+                   WHERE user_id = ? AND EXISTS (
                        SELECT 1 FROM json_each(tags) WHERE value = ?
                    )""",
-                (clean_tag,),
+                (user_id, clean_tag),
             ) as cursor:
                 total_row = await cursor.fetchone()
                 total = total_row[0] if total_row else 0
             async with db.execute(
                 """SELECT * FROM analyses
-                   WHERE EXISTS (
+                   WHERE user_id = ? AND EXISTS (
                        SELECT 1 FROM json_each(tags) WHERE value = ?
                    )
                    ORDER BY created_at DESC LIMIT ? OFFSET ?""",
-                (clean_tag, limit, offset),
+                (user_id, clean_tag, limit, offset),
             ) as cursor:
                 rows = await cursor.fetchall()
         elif search:
@@ -85,8 +87,9 @@ async def list_history(
             )
             async with db.execute(
                 """SELECT COUNT(*) FROM analyses
-                   WHERE rowid IN (SELECT rowid FROM analyses_fts WHERE analyses_fts MATCH ?)""",
-                (fts_query,),
+                   WHERE user_id = ?
+                     AND rowid IN (SELECT rowid FROM analyses_fts WHERE analyses_fts MATCH ?)""",
+                (user_id, fts_query),
             ) as cursor:
                 total_row = await cursor.fetchone()
                 total = total_row[0] if total_row else 0
@@ -94,20 +97,23 @@ async def list_history(
             async with db.execute(
                 """SELECT analyses.* FROM analyses
                    JOIN analyses_fts ON analyses.rowid = analyses_fts.rowid
-                   WHERE analyses_fts MATCH ?
+                   WHERE analyses.user_id = ? AND analyses_fts MATCH ?
                    ORDER BY analyses_fts.rank
                    LIMIT ? OFFSET ?""",
-                (fts_query, limit, offset),
+                (user_id, fts_query, limit, offset),
             ) as cursor:
                 rows = await cursor.fetchall()
         else:
-            async with db.execute("SELECT COUNT(*) FROM analyses") as cursor:
+            async with db.execute(
+                "SELECT COUNT(*) FROM analyses WHERE user_id = ?", (user_id,)
+            ) as cursor:
                 total_row = await cursor.fetchone()
                 total = total_row[0] if total_row else 0
 
             async with db.execute(
-                "SELECT * FROM analyses ORDER BY created_at DESC LIMIT ? OFFSET ?",
-                (limit, offset),
+                "SELECT * FROM analyses WHERE user_id = ? "
+                "ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                (user_id, limit, offset),
             ) as cursor:
                 rows = await cursor.fetchall()
 
@@ -116,10 +122,13 @@ async def list_history(
 
 
 @router.get("/history/{analysis_id}", response_model=AnalysisResponse)
-async def get_analysis(analysis_id: UUID) -> AnalysisResponse:
+async def get_analysis(
+    analysis_id: UUID, user_id: str = Depends(current_user_id)
+) -> AnalysisResponse:
     async with db_connection() as db:
         async with db.execute(
-            "SELECT * FROM analyses WHERE id = ?", (str(analysis_id),)
+            "SELECT * FROM analyses WHERE id = ? AND user_id = ?",
+            (str(analysis_id), user_id),
         ) as cursor:
             row = await cursor.fetchone()
 
@@ -130,18 +139,21 @@ async def get_analysis(analysis_id: UUID) -> AnalysisResponse:
 
 
 @router.patch("/history/{analysis_id}/tags")
-async def update_tags(analysis_id: UUID, body: UpdateTagsRequest) -> dict:
+async def update_tags(
+    analysis_id: UUID, body: UpdateTagsRequest, user_id: str = Depends(current_user_id)
+) -> dict:
     # Sanitize: strip whitespace, remove empty strings, max 20 tags, max 32 chars each
     tags = [t.strip()[:32] for t in body.tags if t.strip()][:20]
     async with db_connection() as db:
         async with db.execute(
-            "SELECT id FROM analyses WHERE id = ?", (str(analysis_id),)
+            "SELECT id FROM analyses WHERE id = ? AND user_id = ?",
+            (str(analysis_id), user_id),
         ) as cursor:
             if not await cursor.fetchone():
                 raise HTTPException(status_code=404, detail="Analysis not found.")
         await db.execute(
-            "UPDATE analyses SET tags = ? WHERE id = ?",
-            (json.dumps(tags), str(analysis_id)),
+            "UPDATE analyses SET tags = ? WHERE id = ? AND user_id = ?",
+            (json.dumps(tags), str(analysis_id), user_id),
         )
         await db.commit()
     return {"updated": True}
@@ -149,18 +161,21 @@ async def update_tags(analysis_id: UUID, body: UpdateTagsRequest) -> dict:
 
 @router.patch("/history/{analysis_id}/actions")
 async def update_completed_items(
-    analysis_id: UUID, body: UpdateCompletedItemsRequest
+    analysis_id: UUID,
+    body: UpdateCompletedItemsRequest,
+    user_id: str = Depends(current_user_id),
 ) -> dict:
     async with db_connection() as db:
         async with db.execute(
-            "SELECT id FROM analyses WHERE id = ?", (str(analysis_id),)
+            "SELECT id FROM analyses WHERE id = ? AND user_id = ?",
+            (str(analysis_id), user_id),
         ) as cursor:
             if not await cursor.fetchone():
                 raise HTTPException(status_code=404, detail="Analysis not found.")
 
         await db.execute(
-            "UPDATE analyses SET completed_items = ? WHERE id = ?",
-            (json.dumps(body.completed), str(analysis_id)),
+            "UPDATE analyses SET completed_items = ? WHERE id = ? AND user_id = ?",
+            (json.dumps(body.completed), str(analysis_id), user_id),
         )
         await db.commit()
     return {"updated": True}
@@ -173,26 +188,27 @@ async def get_participant_analyses(
     name: str = Path(..., max_length=200),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
+    user_id: str = Depends(current_user_id),
 ) -> HistoryListResponse:
     offset = (page - 1) * limit
     async with db_connection() as db:
         async with db.execute(
             """SELECT COUNT(*) FROM analyses
-               WHERE EXISTS (
+               WHERE user_id = ? AND EXISTS (
                    SELECT 1 FROM json_each(participants) WHERE value = ?
                )""",
-            (name,),
+            (user_id, name),
         ) as cursor:
             total_row = await cursor.fetchone()
             total = total_row[0] if total_row else 0
 
         async with db.execute(
             """SELECT * FROM analyses
-               WHERE EXISTS (
+               WHERE user_id = ? AND EXISTS (
                    SELECT 1 FROM json_each(participants) WHERE value = ?
                )
                ORDER BY created_at DESC LIMIT ? OFFSET ?""",
-            (name, limit, offset),
+            (user_id, name, limit, offset),
         ) as cursor:
             rows = await cursor.fetchall()
 
@@ -201,17 +217,23 @@ async def get_participant_analyses(
 
 
 @router.delete("/history/{analysis_id}")
-async def delete_analysis(analysis_id: UUID) -> dict:
+async def delete_analysis(
+    analysis_id: UUID, user_id: str = Depends(current_user_id)
+) -> dict:
     async with db_connection() as db:
         async with db.execute(
-            "SELECT id FROM analyses WHERE id = ?", (str(analysis_id),)
+            "SELECT id FROM analyses WHERE id = ? AND user_id = ?",
+            (str(analysis_id), user_id),
         ) as cursor:
             row = await cursor.fetchone()
 
         if not row:
             raise HTTPException(status_code=404, detail="Analysis not found.")
 
-        await db.execute("DELETE FROM analyses WHERE id = ?", (str(analysis_id),))
+        await db.execute(
+            "DELETE FROM analyses WHERE id = ? AND user_id = ?",
+            (str(analysis_id), user_id),
+        )
         await db.commit()
 
     return {"deleted": True}

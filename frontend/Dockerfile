@@ -12,6 +12,10 @@ COPY . .
 ARG VITE_API_URL=
 ENV VITE_API_URL=$VITE_API_URL
 
+# Clerk publishable key (pk_*) — public by design, not a secret
+ARG VITE_CLERK_PUBLISHABLE_KEY=
+ENV VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY
+
 RUN npm run build
 
 # Stage 2 — serve with nginx

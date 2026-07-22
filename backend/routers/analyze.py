@@ -6,10 +6,11 @@ import uuid
 from datetime import UTC, datetime
 
 import httpx
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from auth import current_user_id
 from config import settings
 from database import db_connection
 from models import ActionItem, AnalysisResponse, AnalyzeRequest
@@ -27,7 +28,11 @@ _background_tasks: set = set()
 
 @router.post("/analyze", response_model=AnalysisResponse)
 @limiter.limit("10/minute")
-async def analyze(request: Request, body: AnalyzeRequest) -> AnalysisResponse:  # noqa: ARG001
+async def analyze(
+    request: Request,  # noqa: ARG001
+    body: AnalyzeRequest,
+    user_id: str = Depends(current_user_id),
+) -> AnalysisResponse:
     ollama_url = settings.ollama_base_url
 
     prompt = build_prompt(body.text, body.meeting_type)
@@ -106,8 +111,8 @@ async def analyze(request: Request, body: AnalyzeRequest) -> AnalysisResponse:  
             INSERT INTO analyses
               (id, file_name, word_count, summary, key_decisions, action_items,
                participants, topics_discussed, next_meeting, sentiment,
-               provider, model, processing_time_ms, created_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+               provider, model, processing_time_ms, created_at, user_id)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             (
                 analysis_id,
@@ -124,6 +129,7 @@ async def analyze(request: Request, body: AnalyzeRequest) -> AnalysisResponse:  
                 body.model,
                 elapsed_ms,
                 created_at,
+                user_id,
             ),
         )
         await db.commit()
@@ -145,7 +151,7 @@ async def analyze(request: Request, body: AnalyzeRequest) -> AnalysisResponse:  
     )
 
     # Fire webhook in the background — never blocks the response
-    task = asyncio.create_task(fire_webhook(response.model_dump()))
+    task = asyncio.create_task(fire_webhook(response.model_dump(), user_id))
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
 

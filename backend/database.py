@@ -50,6 +50,13 @@ async def init_db() -> None:
             await db.execute(
                 "ALTER TABLE analyses ADD COLUMN tags TEXT DEFAULT '[]'"
             )
+        with suppress(aiosqlite.OperationalError):
+            await db.execute("ALTER TABLE analyses ADD COLUMN user_id TEXT")
+        # Rows from before multi-user belong to the single local user
+        await db.execute("UPDATE analyses SET user_id = 'local' WHERE user_id IS NULL")
+        await db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_analyses_user ON analyses(user_id)"
+        )
 
         # FTS5 virtual table for full-text search
         await db.execute("""

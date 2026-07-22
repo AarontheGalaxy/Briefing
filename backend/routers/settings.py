@@ -1,9 +1,10 @@
 import logging
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from auth import current_user_id
 from config import settings
 from database import db_connection
 from models import ModelsResponse, TestConnectionRequest, TestConnectionResponse
@@ -13,35 +14,38 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
-WEBHOOK_KEY = "webhook_url"
-
-
 class WebhookConfig(BaseModel):
     url: str | None = None
 
 
+def _webhook_key(user_id: str) -> str:
+    return f"webhook_url:{user_id}"
+
+
 @router.get("/webhook", response_model=WebhookConfig)
-async def get_webhook() -> WebhookConfig:
+async def get_webhook(user_id: str = Depends(current_user_id)) -> WebhookConfig:
     async with db_connection() as db:
         async with db.execute(
-            "SELECT value FROM app_settings WHERE key = ?", (WEBHOOK_KEY,)
+            "SELECT value FROM app_settings WHERE key = ?", (_webhook_key(user_id),)
         ) as cursor:
             row = await cursor.fetchone()
     return WebhookConfig(url=row[0] if row else None)
 
 
 @router.put("/webhook", response_model=WebhookConfig)
-async def set_webhook(body: WebhookConfig) -> WebhookConfig:
+async def set_webhook(
+    body: WebhookConfig, user_id: str = Depends(current_user_id)
+) -> WebhookConfig:
     async with db_connection() as db:
         if body.url:
             await db.execute(
                 "INSERT INTO app_settings (key, value) VALUES (?, ?) "
                 "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-                (WEBHOOK_KEY, str(body.url)),
+                (_webhook_key(user_id), str(body.url)),
             )
         else:
             await db.execute(
-                "DELETE FROM app_settings WHERE key = ?", (WEBHOOK_KEY,)
+                "DELETE FROM app_settings WHERE key = ?", (_webhook_key(user_id),)
             )
         await db.commit()
     return WebhookConfig(url=body.url)

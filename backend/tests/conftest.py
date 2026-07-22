@@ -9,6 +9,8 @@ from httpx import ASGITransport, AsyncClient
 _db_fd, _db_path = tempfile.mkstemp(suffix=".db")
 os.close(_db_fd)
 os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{_db_path}"
+# Tests run without Clerk — explicit opt-in required by the fail-closed auth
+os.environ["ALLOW_INSECURE_NO_AUTH"] = "true"
 
 from database import init_db  # noqa: E402
 from main import app  # noqa: E402

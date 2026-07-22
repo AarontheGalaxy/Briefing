@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import App from "./App";
+import { AuthGate } from "./AuthGate";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./index.css";
 
@@ -19,7 +20,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <App />
+        <AuthGate>
+          <App />
+        </AuthGate>
         <Toaster
           position="bottom-right"
           toastOptions={{

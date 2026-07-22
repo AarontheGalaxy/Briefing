@@ -8,7 +8,11 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./meetings.db"
     max_file_size_mb: int = 50
     cors_origins: str = "http://localhost:5173"
-    api_auth_token: str | None = None
+    # Clerk instance issuer, e.g. https://your-slug.clerk.accounts.dev
+    clerk_issuer: str | None = None
+    # Explicit opt-in to run WITHOUT auth (single-user local dev / tests).
+    # Without this, startup fails if CLERK_ISSUER is unset — never silently open.
+    allow_insecure_no_auth: bool = False
     # True for local dev; set ENABLE_OLLAMA=false in prod so users must bring
     # their own OpenAI/Anthropic key (no server compute exposure)
     enable_ollama: bool = True

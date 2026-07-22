@@ -9,7 +9,6 @@ import httpx
 from database import db_connection
 
 logger = logging.getLogger(__name__)
-WEBHOOK_KEY = "webhook_url"
 WEBHOOK_TIMEOUT = 10.0
 
 _ALLOWED_SCHEMES = {"http", "https"}
@@ -54,17 +53,17 @@ async def _validate_webhook_url(url: str) -> bool:
     return True
 
 
-async def get_webhook_url() -> str | None:
+async def get_webhook_url(user_id: str) -> str | None:
     async with db_connection() as db:
         async with db.execute(
-            "SELECT value FROM app_settings WHERE key = ?", (WEBHOOK_KEY,)
+            "SELECT value FROM app_settings WHERE key = ?", (f"webhook_url:{user_id}",)
         ) as cursor:
             row = await cursor.fetchone()
     return row[0] if row else None
 
 
-async def fire_webhook(payload: dict) -> None:
-    url = await get_webhook_url()
+async def fire_webhook(payload: dict, user_id: str) -> None:
+    url = await get_webhook_url(user_id)
     if not url:
         return
     if not await _validate_webhook_url(url):
