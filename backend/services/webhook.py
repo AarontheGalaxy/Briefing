@@ -28,14 +28,27 @@ async def _validate_webhook_url(url: str) -> bool:
 
     try:
         loop = asyncio.get_running_loop()
-        infos = await loop.getaddrinfo(hostname, parsed.port or 80, family=socket.AF_INET)
+        # AF_UNSPEC: check IPv6 (AAAA) records too, not just IPv4
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        infos = await loop.getaddrinfo(hostname, port, family=socket.AF_UNSPEC)
     except Exception:  # noqa: BLE001
         return False
 
+    if not infos:
+        return False
+
+    # ponytail: resolve-then-connect leaves a DNS-rebinding window; pin the
+    # resolved IP on the request if this ever needs to be airtight.
     for info in infos:
-        ip_str = info[4][0]
-        ip = ipaddress.ip_address(ip_str)
-        if ip.is_private or ip.is_loopback or ip.is_link_local:
+        ip = ipaddress.ip_address(info[4][0])
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_reserved
+            or ip.is_unspecified
+            or ip.is_multicast
+        ):
             return False
 
     return True
