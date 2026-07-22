@@ -3,8 +3,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
+    # Not exposed publicly — only reachable via the nginx proxy in frontend
     volumes:
       # Persist the SQLite database across container restarts
       - briefing_data:/app/data
@@ -34,8 +33,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        # Reachable from the user's browser, not from inside Docker
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+        # Empty = same origin: nginx proxies /api to the backend container
+        VITE_API_URL: ${VITE_API_URL:-}
     ports:
       - "5173:80"
     depends_on:
