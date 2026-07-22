@@ -7,6 +7,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Run as non-root; /app/data must be writable for the SQLite volume
+RUN useradd --create-home app && mkdir -p /app/data && chown -R app /app
+USER app
+
 EXPOSE 8000
 
 # --proxy-headers: trust X-Forwarded-For from nginx so rate limiting sees real
