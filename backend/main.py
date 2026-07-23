@@ -1,9 +1,11 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -41,6 +43,32 @@ async def limit_body_size(request: Request, call_next):  # type: ignore[no-untyp
             return JSONResponse(status_code=413, content={"detail": "Request body too large."})
     return await call_next(request)
 
+
+# Same headers nginx used to set — needed now that uvicorn serves the SPA too.
+# Clerk domains allowed for auth; using a Clerk custom domain? Add it here.
+_SECURITY_HEADERS = {
+    "X-Frame-Options": "SAMEORIGIN",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Strict-Transport-Security": "max-age=31536000",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "script-src 'self' https://*.clerk.accounts.dev; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: https://img.clerk.com; "
+        "connect-src 'self' https://*.clerk.accounts.dev; "
+        "worker-src 'self' blob:; "
+        "frame-ancestors 'self'"
+    ),
+}
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):  # type: ignore[no-untyped-def]
+    response = await call_next(request)
+    response.headers.update(_SECURITY_HEADERS)
+    return response
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=app_settings.cors_origins_list,
@@ -57,3 +85,15 @@ app.include_router(settings.router, dependencies=[Depends(current_user_id)])
 @app.get("/health")
 async def health() -> dict:
     return {"status": "ok"}
+
+
+# Serve the built frontend from the same origin (single-container deploy).
+# Mounted last so /api/* and /health always take precedence.
+_STATIC_DIR = Path(__file__).parent / "static"
+if (_STATIC_DIR / "index.html").is_file():
+    app.mount("/assets", StaticFiles(directory=_STATIC_DIR / "assets"), name="assets")
+
+    @app.get("/{_path:path}")
+    async def spa_fallback(_path: str) -> FileResponse:
+        """Any non-API path returns index.html — the SPA router handles it."""
+        return FileResponse(_STATIC_DIR / "index.html")
