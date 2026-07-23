@@ -71,6 +71,8 @@ id_rsa.pub
 node_modules/
 dist/
 build/
+# Frontend build output, copied into the backend image at Docker build time
+backend/static/
 .cache/
 .parcel-cache/
 .turbo/

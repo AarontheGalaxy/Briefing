@@ -1,0 +1,34 @@
+# Render Blueprint — single Docker service (FastAPI serves the built SPA).
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: briefing
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter          # persistent disks need Starter or higher; free has no disk
+    healthCheckPath: /health
+
+    envVars:
+      # Set in the Render dashboard (sync: false = Render prompts, never in git)
+      - key: CLERK_ISSUER
+        sync: false
+      # Public by design (pk_*), but read at BUILD time — see dockerfile arg below
+      - key: VITE_CLERK_PUBLISHABLE_KEY
+        sync: false
+
+      # BYOK only — no server-side LLM compute
+      - key: ENABLE_OLLAMA
+        value: "false"
+      # SQLite lives on the mounted disk so history survives restarts
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./data/meetings.db
+      - key: MAX_FILE_SIZE_MB
+        value: "50"
+      # NOTE: ALLOW_INSECURE_NO_AUTH is deliberately absent. Setting it to true
+      # disables all authentication. Never add it here.
+
+    disk:
+      name: briefing-data
+      mountPath: /app/data
+      sizeGB: 1
