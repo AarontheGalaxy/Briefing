@@ -93,6 +93,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Security audit
+        run: npm audit --audit-level=high
+
       - name: Type check
         run: npx tsc --noEmit
 
@@ -100,3 +103,43 @@ jobs:
         run: npm run build
         env:
           VITE_API_URL: http://localhost:8000
+
+  # ──────────────────────────────────────────────
+  docker:
+    name: Single-container image build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: secret-scan
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build deploy image
+        run: docker build -t briefing:ci .
+
+      - name: Smoke test — container serves SPA and API
+        run: |
+          docker run -d --name briefing-ci -p 8000:8000 \
+            -e ALLOW_INSECURE_NO_AUTH=true \
+            -e DATABASE_URL=sqlite+aiosqlite:///./data/ci.db \
+            briefing:ci
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8000/health && break || sleep 2
+          done
+          echo "--- health ---"
+          curl -sf http://localhost:8000/health
+          echo "--- SPA index ---"
+          curl -sf http://localhost:8000/ | grep -q "<!doctype html>"
+          echo "--- API returns JSON, not index.html ---"
+          curl -sf http://localhost:8000/api/history | grep -q '"items"'
+          echo "--- security headers ---"
+          curl -sf -D- -o /dev/null http://localhost:8000/ | grep -qi 'content-security-policy'
+          docker rm -f briefing-ci
+
+      - name: Fail-closed check — no CLERK_ISSUER must abort startup
+        run: |
+          if docker run --rm -e DATABASE_URL=sqlite+aiosqlite:///./data/ci.db briefing:ci 2>&1 | grep -q "CLERK_ISSUER is not set"; then
+            echo "Correctly refused to start without auth config."
+          else
+            echo "SECURITY: container started without CLERK_ISSUER!" && exit 1
+          fi
